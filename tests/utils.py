@@ -1,10 +1,11 @@
 import json
 import random
 import string
-from typing import Any, Optional
+from typing import List, Optional
 
 import boto3
 from aws_lambda_powertools.utilities.typing import LambdaContext
+from pydantic import BaseModel
 
 from cdk.service.utils import get_stack_name
 
@@ -24,63 +25,6 @@ def generate_context() -> LambdaContext:
     return context
 
 
-# example taken from AWS Lambda Powertools test files
-# https://github.com/awslabs/aws-lambda-powertools-python/blob/develop/tests/events/apiGatewayProxyEvent.json
-def generate_api_gw_event(body: Optional[dict[str, Any]]) -> dict[str, Any]:
-    return {
-        'version': '1.0',
-        'resource': '/api/orders',
-        'path': '/api/orders',
-        'httpMethod': 'POST',
-        'headers': {'Content-Type': 'application/json', 'Header2': 'value2'},
-        'multiValueHeaders': {'Header1': ['value1'], 'Header2': ['value1', 'value2']},
-        'queryStringParameters': {'parameter1': 'value1', 'parameter2': 'value'},
-        'multiValueQueryStringParameters': {'parameter1': ['value1', 'value2'], 'parameter2': ['value']},
-        'requestContext': {
-            'accountId': '123456789012',
-            'apiId': 'id',
-            'authorizer': {'claims': None, 'scopes': None},
-            'domainName': 'id.execute-api.us-east-1.amazonaws.com',
-            'domainPrefix': 'id',
-            'extendedRequestId': 'request-id',
-            'httpMethod': 'POST',
-            'identity': {
-                'accessKey': None,
-                'accountId': None,
-                'caller': None,
-                'cognitoAuthenticationProvider': None,
-                'cognitoAuthenticationType': None,
-                'cognitoIdentityId': None,
-                'cognitoIdentityPoolId': None,
-                'principalOrgId': None,
-                'sourceIp': '192.168.0.1/32',
-                'user': None,
-                'userAgent': 'user-agent',
-                'userArn': None,
-                'clientCert': {
-                    'clientCertPem': 'CERT_CONTENT',
-                    'subjectDN': 'www.example.com',
-                    'issuerDN': 'Example issuer',
-                    'serialNumber': 'a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1',
-                    'validity': {'notBefore': 'May 28 12:30:02 2019 GMT', 'notAfter': 'Aug  5 09:36:04 2021 GMT'},
-                },
-            },
-            'path': '/api/orders',
-            'protocol': 'HTTP/1.1',
-            'requestId': 'id=',
-            'requestTime': '04/Mar/2020:19:15:17 +0000',
-            'requestTimeEpoch': 1583349317135,
-            'resourceId': None,
-            'resourcePath': '/api/orders',
-            'stage': '$default',
-        },
-        'pathParameters': None,
-        'stageVariables': None,
-        'body': '' if body is None else json.dumps(body),
-        'isBase64Encoded': False,
-    }
-
-
 def get_stack_output(output_key: str) -> str:
     client = boto3.client('cloudformation')
     response = client.describe_stacks(StackName=get_stack_name())
@@ -89,3 +33,60 @@ def get_stack_output(output_key: str) -> str:
         if str(value['OutputKey']) == output_key:
             return value['OutputValue']
     raise Exception(f'stack output {output_key} was not found')
+
+
+class ContentItem(BaseModel):
+    type: str
+    text: str
+
+
+class Result(BaseModel):
+    content: List[ContentItem]
+
+
+class JSONRPCErrorModel(BaseModel):
+    code: int
+    message: str
+
+
+class ErrorContentItem(BaseModel):
+    type: str
+    text: str
+
+
+class JSONRPCResponse(BaseModel):
+    jsonrpc: str
+    id: Optional[str]
+    result: Optional[Result] = None
+    error: Optional[JSONRPCErrorModel] = None
+    errorContent: Optional[List[ErrorContentItem]] = None
+
+
+def generate_lambda_event(jsonrpc_payload: dict):
+    """Create a realistic API Gateway proxy event for Lambda."""
+    return {
+        'resource': '/mcp',
+        'path': '/mcp',
+        'httpMethod': 'POST',
+        'headers': {
+            'content-type': 'application/json',
+            'accept': 'application/json, text/event-stream',
+        },
+        'multiValueHeaders': {
+            'content-type': ['application/json'],
+            'accept': ['application/json, text/event-stream'],
+        },
+        'queryStringParameters': None,
+        'multiValueQueryStringParameters': None,
+        'pathParameters': None,
+        'stageVariables': None,
+        'requestContext': {
+            'resourcePath': '/mcp',
+            'httpMethod': 'POST',
+            'path': '/Prod/mcp',
+            'identity': {},
+            'requestId': 'test-request-id',
+        },
+        'body': json.dumps(jsonrpc_payload),
+        'isBase64Encoded': False,
+    }

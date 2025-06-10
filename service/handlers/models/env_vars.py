@@ -8,5 +8,5 @@ class Observability(BaseModel):
     LOG_LEVEL: Literal['DEBUG', 'INFO', 'ERROR', 'CRITICAL', 'WARNING', 'EXCEPTION']
 
 
-class MyHandlerEnvVars(Observability):
-    pass
+class McpHandlerEnvVars(Observability):
+    TABLE_NAME: Annotated[str, Field(min_length=1)]  # DynamoDB table name for session storage

@@ -2,9 +2,7 @@ from http import HTTPStatus
 from unittest.mock import patch
 
 from service.handlers.mcp import lambda_handler
-from tests.mcp_schemas import (
-    JSONRPCResponse,
-)
+from tests.mcp_schemas import JSONRPCResponse
 from tests.utils import generate_context, generate_lambda_event
 
 

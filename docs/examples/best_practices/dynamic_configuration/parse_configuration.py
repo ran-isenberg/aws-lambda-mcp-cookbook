@@ -6,7 +6,7 @@ from aws_lambda_env_modeler import init_environment_variables
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
 from service.handlers.models.dynamic_configuration import MyConfiguration
-from service.handlers.models.env_vars import MyHandlerEnvVars
+from service.handlers.models.env_vars import McpHandlerEnvVars
 from service.handlers.utils.dynamic_configuration import parse_configuration
 from service.handlers.utils.observability import logger
 
@@ -15,7 +15,7 @@ def build_response(http_status: HTTPStatus, body: dict[str, Any]) -> dict[str, A
     return {'statusCode': http_status, 'headers': {'Content-Type': 'application/json'}, 'body': json.dumps(body)}
 
 
-@init_environment_variables(model=MyHandlerEnvVars)
+@init_environment_variables(model=McpHandlerEnvVars)
 def my_handler(event: dict[str, Any], context: LambdaContext) -> dict[str, Any]:
     try:
         my_configuration = parse_configuration(model=MyConfiguration)

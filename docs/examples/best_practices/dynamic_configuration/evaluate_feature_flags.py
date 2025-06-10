@@ -6,12 +6,12 @@ from aws_lambda_env_modeler import init_environment_variables
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
 from service.handlers.models.dynamic_configuration import MyConfiguration
-from service.handlers.models.env_vars import MyHandlerEnvVars
+from service.handlers.models.env_vars import McpHandlerEnvVars
 from service.handlers.utils.dynamic_configuration import get_configuration_store, parse_configuration
 from service.handlers.utils.observability import logger
 
 
-@init_environment_variables(model=MyHandlerEnvVars)
+@init_environment_variables(model=McpHandlerEnvVars)
 def my_handler(event: dict[str, Any], context: LambdaContext) -> dict[str, Any]:
     try:
         my_configuration: MyConfiguration = parse_configuration(model=MyConfiguration)  # type: ignore
