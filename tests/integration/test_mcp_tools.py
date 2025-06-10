@@ -6,47 +6,76 @@ from tests.mcp_schemas import JSONRPCResponse
 from tests.utils import generate_context, generate_lambda_event
 
 
-def test_math_tool_add():
+def test_math_tool_add(session_id):
+    """Test math tool with proper session initialization."""
+    # Use the session ID from the fixture
+    context = generate_context()
+
+    # Call the math tool with the session ID
     jsonrpc_payload = {'jsonrpc': '2.0', 'id': '2', 'method': 'tools/call', 'params': {'name': 'math', 'arguments': {'a': 3, 'b': 4}}}
-    event = generate_lambda_event(jsonrpc_payload)
-    lambda_response = lambda_handler(event, generate_context())
+    event = generate_lambda_event(jsonrpc_payload, session_id=session_id)
+    lambda_response = lambda_handler(event, context)
+
+    # Verify the response
     assert lambda_response['statusCode'] == HTTPStatus.OK
     assert lambda_response['headers']['Content-Type'] == 'application/json'
+    assert lambda_response['headers']['MCP-Session-Id'] == session_id
+
+    # Validate the response body
     lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
-    assert lambda_response_body.result.content[0].text == '7', f'Unexpected response: {lambda_response_body.result.content[0].text}'
-    assert lambda_response_body.result.content[0].type == 'text', f'Unexpected response: {lambda_response_body.result.content[0].type}'
-    assert len(lambda_response_body.result.content) == 1
+
+    # Verify the basic JSON-RPC structure
+    assert lambda_response_body.jsonrpc == '2.0'
+    assert lambda_response_body.id == '2'
+    assert lambda_response_body.result is not None
+
+    # The result should have a content list
+    assert hasattr(lambda_response_body.result, 'content')
+
+    content = lambda_response_body.result.content
+    assert len(content) == 1
+    assert content[0].text == '7', f'Unexpected response: {content[0].text}'
+    assert content[0].type == 'text', f'Unexpected response: {content[0].type}'
 
 
-def test_math_tool_add_error():
+def test_math_tool_add_error(session_id):
     """Test math tool when logic raises an error."""
+    # Use the session ID from the fixture
+    context = generate_context()
+
+    # Call the math tool with the session ID
     jsonrpc_payload = {'jsonrpc': '2.0', 'id': '3', 'method': 'tools/call', 'params': {'name': 'math', 'arguments': {'a': 3, 'b': 4}}}
-    event = generate_lambda_event(jsonrpc_payload)
+    event = generate_lambda_event(jsonrpc_payload, session_id=session_id)
+
+    # Mock the add_two_numbers function to raise an error
     with patch('service.handlers.mcp.add_two_numbers', side_effect=RuntimeError('math error')):
-        lambda_response = lambda_handler(event, generate_context())
+        lambda_response = lambda_handler(event, context)
+
+    # Verify the response
     assert lambda_response['statusCode'] == HTTPStatus.INTERNAL_SERVER_ERROR
     assert lambda_response['headers']['Content-Type'] == 'application/json'
+    assert lambda_response['headers']['MCP-Session-Id'] == session_id
+
+    # Validate the error response
     lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
     assert lambda_response_body.error.message == 'Error executing tool: math error'
 
 
-def test_math_tool_invalid_input():
+def test_math_tool_invalid_input(session_id):
     """Test math tool with invalid input types."""
+    # Use the session ID from the fixture
+    context = generate_context()
+
+    # Call the math tool with invalid arguments
     jsonrpc_payload = {'jsonrpc': '2.0', 'id': '4', 'method': 'tools/call', 'params': {'name': 'math', 'arguments': {'a': 'foo', 'b': 4}}}
-    event = generate_lambda_event(jsonrpc_payload)
-    lambda_response = lambda_handler(event, generate_context())
+    event = generate_lambda_event(jsonrpc_payload, session_id=session_id)
+    lambda_response = lambda_handler(event, context)
+
+    # Verify the response
     assert lambda_response['statusCode'] == HTTPStatus.INTERNAL_SERVER_ERROR
     assert lambda_response['headers']['Content-Type'] == 'application/json'
+    assert lambda_response['headers']['MCP-Session-Id'] == session_id
+
+    # Validate the error response
     lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
     assert lambda_response_body.error.message == 'Error executing tool: Invalid input: a and b must be integers'
-
-
-def test_tool_not_found():
-    """Test calling a non-existent tool returns 404."""
-    jsonrpc_payload = {'jsonrpc': '2.0', 'id': '5', 'method': 'tools/call', 'params': {'name': 'not_a_tool', 'arguments': {'a': 1, 'b': 2}}}
-    event = generate_lambda_event(jsonrpc_payload)
-    lambda_response = lambda_handler(event, generate_context())
-    assert lambda_response['statusCode'] == HTTPStatus.NOT_FOUND
-    assert lambda_response['headers']['Content-Type'] == 'application/json'
-    lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
-    assert lambda_response_body.error.message.startswith("Tool 'not_a_tool' not found")

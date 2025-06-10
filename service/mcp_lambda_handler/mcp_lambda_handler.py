@@ -15,7 +15,6 @@
 import functools
 import inspect
 import json
-import logging
 from contextvars import ContextVar
 from enum import Enum
 from typing import (
@@ -32,6 +31,7 @@ from typing import (
     get_type_hints,
 )
 
+from service.handlers.utils.observability import logger
 from service.mcp_lambda_handler.session import DynamoDBSessionStore, NoOpSessionStore, SessionStore
 from service.mcp_lambda_handler.types import (
     Capabilities,
@@ -43,8 +43,6 @@ from service.mcp_lambda_handler.types import (
     ServerInfo,
     TextContent,
 )
-
-logger = logging.getLogger(__name__)
 
 # Context variable to store current session ID
 current_session_id: ContextVar[Optional[str]] = ContextVar('current_session_id', default=None)
@@ -327,6 +325,7 @@ class MCPLambdaHandler:
             # Set current session ID in context
             if session_id:
                 current_session_id.set(session_id)
+                logger.debug('session_id found', extra={'session_id': session_id})
             else:
                 current_session_id.set(None)
 
@@ -372,6 +371,7 @@ class MCPLambdaHandler:
                 # Create new session
                 session_id = self.session_store.create_session()
                 current_session_id.set(session_id)
+                logger.debug('session_id created', extra={'session_id': session_id})
                 result = InitializeResult(
                     protocolVersion='2024-11-05',
                     serverInfo=ServerInfo(name=self.name, version=self.version),

@@ -14,15 +14,14 @@
 ## Taken from https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler
 """Session management for MCP server with pluggable storage."""
 
-import logging
 import time
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
-import boto3
+from boto3 import resource as boto3_resource
 
-logger = logging.getLogger(__name__)
+from service.handlers.utils.observability import logger
 
 
 class SessionStore(ABC):
@@ -105,16 +104,35 @@ class NoOpSessionStore(SessionStore):
 class DynamoDBSessionStore(SessionStore):
     """Manages MCP sessions using DynamoDB."""
 
-    def __init__(self, table_name: str = 'mcp_sessions'):
+    def __init__(self, table_name_getter: Callable[[], str]):
         """Initialize the session store.
 
         Args:
-            table_name: Name of DynamoDB table to use for sessions
+            table_name_getter: A callable that takes no arguments and returns the DynamoDB table name as a string
 
         """
-        self.table_name = table_name
-        self.dynamodb = boto3.resource('dynamodb')
-        self.table = self.dynamodb.Table(table_name)  # pyright: ignore [reportAttributeAccessIssue]
+        self.table_name_getter = table_name_getter
+        self._table = None
+        self._dynamodb = None
+
+    @property
+    def table_name(self) -> str:
+        """Get the table name by calling the table_name_getter."""
+        return self.table_name_getter()
+
+    @property
+    def dynamodb(self):
+        """Lazy initialization of the DynamoDB resource."""
+        if self._dynamodb is None:
+            self._dynamodb = boto3_resource('dynamodb')
+        return self._dynamodb
+
+    @property
+    def table(self):
+        """Lazy initialization of the DynamoDB table."""
+        if self._table is None:
+            self._table = self.dynamodb.Table(self.table_name)  # pyright: ignore [reportAttributeAccessIssue]
+        return self._table
 
     def create_session(self, session_data: Optional[Dict[str, Any]] = None) -> str:
         """Create a new session.

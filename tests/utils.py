@@ -1,6 +1,7 @@
 import json
 import random
 import string
+from http import HTTPStatus
 from typing import List, Optional
 
 import boto3
@@ -62,20 +63,33 @@ class JSONRPCResponse(BaseModel):
     errorContent: Optional[List[ErrorContentItem]] = None
 
 
-def generate_lambda_event(jsonrpc_payload: dict):
-    """Create a realistic API Gateway proxy event for Lambda."""
+def generate_lambda_event(jsonrpc_payload: dict, session_id: Optional[str] = None):
+    """Create a realistic API Gateway proxy event for Lambda.
+
+    Args:
+        jsonrpc_payload: The JSON-RPC payload to include in the request body
+        session_id: Optional session ID to include in the headers. If None, no session ID is included.
+    """
+    headers = {
+        'content-type': 'application/json',
+        'accept': 'application/json, text/event-stream',
+    }
+
+    multi_value_headers = {
+        'content-type': ['application/json'],
+        'accept': ['application/json, text/event-stream'],
+    }
+
+    if session_id:
+        headers['mcp-session-id'] = session_id
+        multi_value_headers['mcp-session-id'] = [session_id]
+
     return {
         'resource': '/mcp',
         'path': '/mcp',
         'httpMethod': 'POST',
-        'headers': {
-            'content-type': 'application/json',
-            'accept': 'application/json, text/event-stream',
-        },
-        'multiValueHeaders': {
-            'content-type': ['application/json'],
-            'accept': ['application/json, text/event-stream'],
-        },
+        'headers': headers,
+        'multiValueHeaders': multi_value_headers,
         'queryStringParameters': None,
         'multiValueQueryStringParameters': None,
         'pathParameters': None,
@@ -90,3 +104,67 @@ def generate_lambda_event(jsonrpc_payload: dict):
         'body': json.dumps(jsonrpc_payload),
         'isBase64Encoded': False,
     }
+
+
+def initialize_mcp_session(lambda_handler_func, context=None):
+    """Initialize an MCP session and return the session ID.
+
+    Args:
+        lambda_handler_func: The Lambda handler function to call
+        context: Optional Lambda context object. If None, one will be created.
+
+    Returns:
+        The session ID from the initialize response
+    """
+    if context is None:
+        context = generate_context()
+
+    # Create an initialize request
+    init_payload = {'jsonrpc': '2.0', 'id': '1', 'method': 'initialize'}
+
+    # Call the lambda handler with the initialize request
+    event = generate_lambda_event(init_payload)
+    response = lambda_handler_func(event, context)
+
+    # Verify response and extract session ID
+    assert response['statusCode'] == HTTPStatus.OK
+    assert 'MCP-Session-Id' in response['headers']
+
+    return response['headers']['MCP-Session-Id']
+
+
+def terminate_mcp_session(lambda_handler_func, session_id, context=None):
+    """Terminate an MCP session by sending a DELETE request.
+
+    Args:
+        lambda_handler_func: The Lambda handler function to call
+        session_id: The session ID to terminate
+        context: Optional Lambda context object. If None, one will be created.
+
+    Returns:
+        Boolean indicating if the termination was successful
+    """
+    if context is None:
+        context = generate_context()
+
+    # Create a DELETE request to remove the session
+    event = {
+        'resource': '/mcp',
+        'path': '/mcp',
+        'httpMethod': 'DELETE',
+        'headers': {'content-type': 'application/json', 'accept': 'application/json', 'mcp-session-id': session_id},
+        'multiValueHeaders': {'content-type': ['application/json'], 'accept': ['application/json'], 'mcp-session-id': [session_id]},
+        'queryStringParameters': None,
+        'multiValueQueryStringParameters': None,
+        'pathParameters': None,
+        'stageVariables': None,
+        'requestContext': {'resourcePath': '/mcp', 'httpMethod': 'DELETE', 'path': '/Prod/mcp', 'identity': {}, 'requestId': 'test-delete-request'},
+        'body': None,
+        'isBase64Encoded': False,
+    }
+
+    # Call the lambda handler with the DELETE request
+    response = lambda_handler_func(event, context)
+
+    # Verify the response indicates successful deletion
+    return response['statusCode'] == HTTPStatus.NO_CONTENT
