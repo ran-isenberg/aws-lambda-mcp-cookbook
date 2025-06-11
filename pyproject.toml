@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry]
 name = "aws_lambda_handler_cookbook"
 version = "3.0.0"
-description = "This repository provides a working, deployable, open source based, AWS Lambda handler and CDK Python code. This handler embodies Serverless best practices and has all the bells and whistles for a proper production ready handler"
+description = "This repository provides a working, deployable, open source based, AWS Lambda MCP server and CDK Python code. This handler embodies Serverless best practices and has all the bells and whistles for a proper production ready handler"
 authors = ["Ran Isenberg"]
 classifiers=[
     "Development Status :: 5 - Production/Stable",
@@ -13,19 +13,16 @@ classifiers=[
     "Natural Language :: English",
     "Programming Language :: Python :: 3.13",
 ]
-repository="https://github.com/ran-isenberg/aws-lambda-handler-cookbook"
+repository="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook"
 readme = "README.md"
-keywords = ["aws lambda cookbook", "guide to aws lambda", "cdk blueprint", "best practices", "serverless service blueprint"]
+keywords = ["aws lambda mcp cookbook", "guide to aws mcp lambda", "cdk blueprint", "best practices", "serverless mcp server blueprint"]
 license = "MIT-0"
 
 
 [tool.poetry.dependencies]
 python = "^3.13.0"
 pydantic = {version = "^2.0.3"}
-email-validator = {version = "*"}
 aws-lambda-powertools =  {extras = ["tracer"],version = "^3.7.0"}
-mypy-boto3-dynamodb = "*"
-cachetools = "*"
 boto3 = "^1.26.125"
 aws-lambda-env-modeler = "*"
 
@@ -43,6 +40,7 @@ pytest-mock = "*"
 pycodestyle = "*"
 pytest-cov = "*"
 pytest-html = "*"
+pytest-asyncio = "*"
 python-dateutil = "*"
 python-dotenv = "*"
 GitPython = "*"
@@ -58,6 +56,8 @@ mypy = "*"
 types-requests = "*"
 toml = "*"
 mkdocs-render-swagger-plugin = "*"
+mcp = "*"
+tenacity = "*"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.9"

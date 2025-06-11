@@ -1,10 +1,12 @@
 import json
 import random
 import string
-from typing import Any, Optional
+from http import HTTPStatus
+from typing import List, Optional
 
 import boto3
 from aws_lambda_powertools.utilities.typing import LambdaContext
+from pydantic import BaseModel
 
 from cdk.service.utils import get_stack_name
 
@@ -24,63 +26,6 @@ def generate_context() -> LambdaContext:
     return context
 
 
-# example taken from AWS Lambda Powertools test files
-# https://github.com/awslabs/aws-lambda-powertools-python/blob/develop/tests/events/apiGatewayProxyEvent.json
-def generate_api_gw_event(body: Optional[dict[str, Any]]) -> dict[str, Any]:
-    return {
-        'version': '1.0',
-        'resource': '/api/orders',
-        'path': '/api/orders',
-        'httpMethod': 'POST',
-        'headers': {'Content-Type': 'application/json', 'Header2': 'value2'},
-        'multiValueHeaders': {'Header1': ['value1'], 'Header2': ['value1', 'value2']},
-        'queryStringParameters': {'parameter1': 'value1', 'parameter2': 'value'},
-        'multiValueQueryStringParameters': {'parameter1': ['value1', 'value2'], 'parameter2': ['value']},
-        'requestContext': {
-            'accountId': '123456789012',
-            'apiId': 'id',
-            'authorizer': {'claims': None, 'scopes': None},
-            'domainName': 'id.execute-api.us-east-1.amazonaws.com',
-            'domainPrefix': 'id',
-            'extendedRequestId': 'request-id',
-            'httpMethod': 'POST',
-            'identity': {
-                'accessKey': None,
-                'accountId': None,
-                'caller': None,
-                'cognitoAuthenticationProvider': None,
-                'cognitoAuthenticationType': None,
-                'cognitoIdentityId': None,
-                'cognitoIdentityPoolId': None,
-                'principalOrgId': None,
-                'sourceIp': '192.168.0.1/32',
-                'user': None,
-                'userAgent': 'user-agent',
-                'userArn': None,
-                'clientCert': {
-                    'clientCertPem': 'CERT_CONTENT',
-                    'subjectDN': 'www.example.com',
-                    'issuerDN': 'Example issuer',
-                    'serialNumber': 'a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1:a1',
-                    'validity': {'notBefore': 'May 28 12:30:02 2019 GMT', 'notAfter': 'Aug  5 09:36:04 2021 GMT'},
-                },
-            },
-            'path': '/api/orders',
-            'protocol': 'HTTP/1.1',
-            'requestId': 'id=',
-            'requestTime': '04/Mar/2020:19:15:17 +0000',
-            'requestTimeEpoch': 1583349317135,
-            'resourceId': None,
-            'resourcePath': '/api/orders',
-            'stage': '$default',
-        },
-        'pathParameters': None,
-        'stageVariables': None,
-        'body': '' if body is None else json.dumps(body),
-        'isBase64Encoded': False,
-    }
-
-
 def get_stack_output(output_key: str) -> str:
     client = boto3.client('cloudformation')
     response = client.describe_stacks(StackName=get_stack_name())
@@ -89,3 +34,137 @@ def get_stack_output(output_key: str) -> str:
         if str(value['OutputKey']) == output_key:
             return value['OutputValue']
     raise Exception(f'stack output {output_key} was not found')
+
+
+class ContentItem(BaseModel):
+    type: str
+    text: str
+
+
+class Result(BaseModel):
+    content: List[ContentItem]
+
+
+class JSONRPCErrorModel(BaseModel):
+    code: int
+    message: str
+
+
+class ErrorContentItem(BaseModel):
+    type: str
+    text: str
+
+
+class JSONRPCResponse(BaseModel):
+    jsonrpc: str
+    id: Optional[str]
+    result: Optional[Result] = None
+    error: Optional[JSONRPCErrorModel] = None
+    errorContent: Optional[List[ErrorContentItem]] = None
+
+
+def generate_lambda_event(jsonrpc_payload: dict, session_id: Optional[str] = None):
+    """Create a realistic API Gateway proxy event for Lambda.
+
+    Args:
+        jsonrpc_payload: The JSON-RPC payload to include in the request body
+        session_id: Optional session ID to include in the headers. If None, no session ID is included.
+    """
+    headers = {
+        'content-type': 'application/json',
+        'accept': 'application/json, text/event-stream',
+    }
+
+    multi_value_headers = {
+        'content-type': ['application/json'],
+        'accept': ['application/json, text/event-stream'],
+    }
+
+    if session_id:
+        headers['mcp-session-id'] = session_id
+        multi_value_headers['mcp-session-id'] = [session_id]
+
+    return {
+        'resource': '/mcp',
+        'path': '/mcp',
+        'httpMethod': 'POST',
+        'headers': headers,
+        'multiValueHeaders': multi_value_headers,
+        'queryStringParameters': None,
+        'multiValueQueryStringParameters': None,
+        'pathParameters': None,
+        'stageVariables': None,
+        'requestContext': {
+            'resourcePath': '/mcp',
+            'httpMethod': 'POST',
+            'path': '/Prod/mcp',
+            'identity': {},
+            'requestId': 'test-request-id',
+        },
+        'body': json.dumps(jsonrpc_payload),
+        'isBase64Encoded': False,
+    }
+
+
+def initialize_mcp_session(lambda_handler_func, context=None):
+    """Initialize an MCP session and return the session ID.
+
+    Args:
+        lambda_handler_func: The Lambda handler function to call
+        context: Optional Lambda context object. If None, one will be created.
+
+    Returns:
+        The session ID from the initialize response
+    """
+    if context is None:
+        context = generate_context()
+
+    # Create an initialize request
+    init_payload = {'jsonrpc': '2.0', 'id': '1', 'method': 'initialize'}
+
+    # Call the lambda handler with the initialize request
+    event = generate_lambda_event(init_payload)
+    response = lambda_handler_func(event, context)
+
+    # Verify response and extract session ID
+    assert response['statusCode'] == HTTPStatus.OK
+    assert 'MCP-Session-Id' in response['headers']
+
+    return response['headers']['MCP-Session-Id']
+
+
+def terminate_mcp_session(lambda_handler_func, session_id, context=None):
+    """Terminate an MCP session by sending a DELETE request.
+
+    Args:
+        lambda_handler_func: The Lambda handler function to call
+        session_id: The session ID to terminate
+        context: Optional Lambda context object. If None, one will be created.
+
+    Returns:
+        Boolean indicating if the termination was successful
+    """
+    if context is None:
+        context = generate_context()
+
+    # Create a DELETE request to remove the session
+    event = {
+        'resource': '/mcp',
+        'path': '/mcp',
+        'httpMethod': 'DELETE',
+        'headers': {'content-type': 'application/json', 'accept': 'application/json', 'mcp-session-id': session_id},
+        'multiValueHeaders': {'content-type': ['application/json'], 'accept': ['application/json'], 'mcp-session-id': [session_id]},
+        'queryStringParameters': None,
+        'multiValueQueryStringParameters': None,
+        'pathParameters': None,
+        'stageVariables': None,
+        'requestContext': {'resourcePath': '/mcp', 'httpMethod': 'DELETE', 'path': '/Prod/mcp', 'identity': {}, 'requestId': 'test-delete-request'},
+        'body': None,
+        'isBase64Encoded': False,
+    }
+
+    # Call the lambda handler with the DELETE request
+    response = lambda_handler_func(event, context)
+
+    # Verify the response indicates successful deletion
+    return response['statusCode'] == HTTPStatus.NO_CONTENT
