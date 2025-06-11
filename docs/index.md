@@ -78,7 +78,7 @@ While the code examples are written in Python, the principles are valid to any s
 
 ## Handler Examples
 
-```python hl_lines="7 12 27" title="mcp_handler.py"
+```python hl_lines="7 12 34" title="mcp_handler.py"
 --8<-- "docs/examples/best_practices/mcp/mcp.py"
 ```
 
