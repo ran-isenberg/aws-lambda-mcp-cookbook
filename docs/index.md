@@ -1,8 +1,8 @@
 ---
 title: Homepage
-description: AWS Lambda MCP Cookbook - a Serverless MCP Service Blueprint
+description: AWS Lambda MCP Cookbook - a Serverless MCP Server Blueprint
 ---
-## **AWS AWS Lambda MCP Cookbook - a Serverless MCP Service Blueprint**
+## **AWS AWS Lambda MCP Cookbook - a Serverless MCP Server Blueprint**
 
 [<img alt="alt_text" src="./media/banner.png" width="400" />](https://www.ranthebuilder.cloud/)
 
