@@ -14,21 +14,18 @@ description: AWS Lambda Cookbook Project Getting started
 
 You can start with a clean service out of this blueprint repository without using the 'Template' button on GitHub.
 
-You can use Cookiecutter.
+**That's it, you are ready to deploy the MCP server:**
 
-* Cookiecutter - install with pip/brew ``brew install cookiecutter`` or ``pip install cookiecutter`
+```bash
+cd {new repo folder}
+poetry env activate
+poetry install
+make deploy
+```
 
-Then run:
+Make sure you have poetry v2 and above.
 
-**[`cookiecutter gh:ran-isenberg/cookiecutter-serverless-python`](#){: .copyMe}:clipboard:**
-
-Answer the questions to select repo name, service name, etc.:
-
-![logo](https://github.com/ran-isenberg/cookiecutter-serverless-python/blob/main/media/howto.png?raw=true)
-
-**That's it, your developer environment has been set! you are ready to deploy the service:**
-
-## **Creating a Developer Environment (without cookiecutter)**
+You can also run 'make pr' will run all checks, synth, file formatters , unit tests, deploy to AWS and run integration and E2E tests.
 
 1. Run ``make dev``
 
@@ -75,10 +72,6 @@ The command auto fixes errors in the code for you.
 If there's an error in the pre-commit stage, it gets auto fixed. However, are required to run ``make pr`` again so it continues to the next stages.
 
 Be sure to commit all the changes that ``make pr`` does for you.
-
-## **OpenAPI Swagger Generation**
-
-Run either ``make pr`` or ``make openopi`` to generate an updated swagger OpenAPI JSON file and place it at docs/swagger/openapi.json location.
 
 ## **GitHub Pages Documentation**
 
