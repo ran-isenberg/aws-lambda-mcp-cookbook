@@ -57,6 +57,7 @@ types-requests = "*"
 toml = "*"
 mkdocs-render-swagger-plugin = "*"
 mcp = "*"
+tenacity = "*"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.9"
