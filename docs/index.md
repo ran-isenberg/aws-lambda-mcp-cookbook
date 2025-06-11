@@ -21,6 +21,8 @@ Starting a production grade Serverless MCP can be overwhelming. You need to figu
 
 This project aims to reduce cognitive load and answer these questions for you by providing a skeleton Python Serverless service blueprint that implements best practices for AWS Lambda, Serverless CI/CD, and AWS CDK in one blueprint project.
 
+The MCP server uses JSON RPC over HTTP (non streamable) via API Gateway's body payload parameter. See integration tests and see how the test event is generated.
+
 ![design](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/docs/media/design.png?raw=true)
 
 ### Serverless MCP Server
@@ -78,9 +80,13 @@ While the code examples are written in Python, the principles are valid to any s
 
 ## Handler Examples
 
-```python hl_lines="7 12 34" title="mcp_handler.py"
+```python hl_lines="7 12 34" title="service/handlers/mcp.py"
 --8<-- "docs/examples/best_practices/mcp/mcp.py"
 ```
+
+Handler is found at service/handlers/mcp.py
+
+MCP engine found at service/mcp_lambda_handler folder
 
 ## **License**
 

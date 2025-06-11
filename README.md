@@ -31,7 +31,7 @@ It's based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/
 
 You can start with a clean service out of this blueprint repository without using the 'Template' button on GitHub.
 
-**That's it, you are ready to deploy the MCP server:**
+**That's it, you are ready to deploy the MCP server (make sure Docker is running!):**
 
 ```bash
 cd {new repo folder}
@@ -60,6 +60,8 @@ Starting a production grade Serverless MCP can be overwhelming. You need to figu
 ## **The Solution**
 
 This project aims to reduce cognitive load and answer these questions for you by providing a production grade Python Serverless MCP server blueprint that implements best practices for AWS Lambda, MCP, Serverless CI/CD, and AWS CDK in one project.
+
+The MCP server uses JSON RPC over HTTP (non streamable) via API Gateway's body payload parameter. See integration tests and see how the test event is generated.
 
 ```python
 from aws_lambda_env_modeler import init_environment_variables
