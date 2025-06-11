@@ -44,6 +44,7 @@ It's based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/
 * PURE Lambda - not web adapter, no FastMCP required!
 * Python Serverless MCP server with a recommended file structure.
 * CDK infrastructure with infrastructure tests and security tests.
+* Tests - unit, integration (tests for full MCP messages) and E2E with a real MCP client
 * CI/CD pipelines based on Github actions that deploys to AWS with python linters, complexity checks and style formatters.
 * CI/CD pipeline deploys to dev/staging and production environments with different gates between each environment
 * Makefile for simple developer experience.
@@ -53,7 +54,6 @@ It's based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/
 * Session context storage in DynamoDB
 * API protected by WAF with four AWS managed rules in production deployment
 * CloudWatch dashboards - High level and low level including CloudWatch alarms
-* Unit, infrastructure, security, integration and end to end tests.
 
 The GitHub blueprint project can be found at [https://github.com/ran-isenberg/aws-lambda-mcp-cookbook](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook){:target="_blank" rel="noopener"}.
 

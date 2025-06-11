@@ -108,6 +108,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
 
 * PURE Lambda - not web adapter, no FastMCP required!
 * Python Serverless MCP server with a recommended file structure.
+* Tests - unit, integration (tests for full MCP messages) and E2E with a real MCP client
 * CDK infrastructure with infrastructure tests and security tests.
 * CI/CD pipelines based on Github actions that deploys to AWS with python linters, complexity checks and style formatters.
 * CI/CD pipeline deploys to dev/staging and production environments with different gates between each environment
@@ -118,7 +119,6 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
 * Session context storage in DynamoDB
 * API protected by WAF with four AWS managed rules in production deployment
 * CloudWatch dashboards - High level and low level including CloudWatch alarms
-* Unit, infrastructure, security, integration and end to end tests.
 
 ## CDK Deployment
 

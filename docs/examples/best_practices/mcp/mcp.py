@@ -19,9 +19,16 @@ def math(a: int, b: int) -> int:
     return result
 
 
+def auth_and_authorize(event: dict, context: LambdaContext) -> None:
+    """Placeholder for authentication and authorization logic."""
+    # This function can be extended to include actual auth logic if needed.
+    pass
+
+
 @init_environment_variables(model=McpHandlerEnvVars)
 @logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST)
 @metrics.log_metrics
 @tracer.capture_lambda_handler(capture_response=False)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
+    # auth_and_authorize(event, context)
     return mcp.handle_request(event, context)
