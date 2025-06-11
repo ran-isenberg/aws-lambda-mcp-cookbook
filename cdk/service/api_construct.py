@@ -13,7 +13,7 @@ from cdk.service.waf_construct import WafToApiGatewayConstruct
 
 
 class ApiConstruct(Construct):
-    def __init__(self, scope: Construct, id_: str, is_production_env: str) -> None:
+    def __init__(self, scope: Construct, id_: str, is_production_env: bool) -> None:
         super().__init__(scope, id_)
         self.id_ = id_
         self.api_db = ApiDbConstruct(self, f'{id_}db')
