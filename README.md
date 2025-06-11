@@ -116,7 +116,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
 * The AWS Lambda handler embodies Serverless best practices and has all the bells and whistles for a proper production ready handler.
 * AWS Lambda handler uses [AWS Lambda Powertools](https://docs.powertools.aws.dev/lambda-python/).
 * AWS Lambda handler 3 layer architecture: handler layer, logic layer and data access layer
-* Session context storage in DynamoDB
+* Session context storage in DynamoDB (does NOT send it to tools yet)
 * API protected by WAF with four AWS managed rules in production deployment
 * CloudWatch dashboards - High level and low level including CloudWatch alarms
 

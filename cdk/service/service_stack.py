@@ -8,11 +8,15 @@ from cdk.service.utils import get_construct_name, get_username
 
 
 class ServiceStack(Stack):
-    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, is_production_env: bool, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         self._add_stack_tags()
 
-        self.api = ApiConstruct(self, get_construct_name(stack_prefix=id, construct_name='mcp_api'))
+        self.api = ApiConstruct(
+            self,
+            get_construct_name(stack_prefix=id, construct_name='mcp_api'),
+            is_production_env=is_production_env,
+        )
 
         # add security check
         self._add_security_tests()

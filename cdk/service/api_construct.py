@@ -13,7 +13,7 @@ from cdk.service.waf_construct import WafToApiGatewayConstruct
 
 
 class ApiConstruct(Construct):
-    def __init__(self, scope: Construct, id_: str) -> None:
+    def __init__(self, scope: Construct, id_: str, is_production_env: str) -> None:
         super().__init__(scope, id_)
         self.id_ = id_
         self.api_db = ApiDbConstruct(self, f'{id_}db')
@@ -23,7 +23,8 @@ class ApiConstruct(Construct):
         api_resource: aws_apigateway.Resource = self.rest_api.root.add_resource(constants.GW_RESOURCE)
         self.create_order_func = self._add_post_lambda_integration(api_resource, self.lambda_role, self.api_db.db)
         self.monitoring = CrudMonitoring(self, id_, self.rest_api, self.api_db.db, [self.create_order_func])
-        self.waf = WafToApiGatewayConstruct(self, f'{id_}waf', self.rest_api)
+        if is_production_env:
+            self.waf = WafToApiGatewayConstruct(self, f'{id_}waf', self.rest_api)
 
     def _build_api_gw(self) -> aws_apigateway.RestApi:
         rest_api: aws_apigateway.RestApi = aws_apigateway.RestApi(

@@ -6,12 +6,6 @@ from mcp.client.streamable_http import streamablehttp_client
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 
-class RetryableAPIError(Exception):
-    """Exception raised when an API call fails but should be retried."""
-
-    pass
-
-
 async def call_math_tool(api_gateway_url, a, b, expected_sum):
     """Call the math tool with retry logic."""
     async with streamablehttp_client(api_gateway_url) as (
@@ -43,7 +37,7 @@ async def call_math_tool(api_gateway_url, a, b, expected_sum):
     reraise=True,
 )
 async def retry_math_tool_call(api_gateway_url, a, b, expected_sum):
-    """Wrapper function with retry logic using tenacity."""
+    """Wrapper function with retry logic using tenacity. Retry in case API Gw is not ready even after deployment."""
     return await call_math_tool(api_gateway_url, a, b, expected_sum)
 
 
