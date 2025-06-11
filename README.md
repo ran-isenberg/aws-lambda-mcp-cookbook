@@ -59,7 +59,37 @@ Starting a production grade Serverless MCP can be overwhelming. You need to figu
 
 ## **The Solution**
 
-This project aims to reduce cognitive load and answer these questions for you by providing a skeleton Python Serverless MCP server blueprint that implements best practices for AWS Lambda, MCP, Serverless CI/CD, and AWS CDK in one blueprint project.
+This project aims to reduce cognitive load and answer these questions for you by providing a production grade Python Serverless MCP server blueprint that implements best practices for AWS Lambda, MCP, Serverless CI/CD, and AWS CDK in one project.
+
+```python
+from aws_lambda_env_modeler import init_environment_variables
+from aws_lambda_powertools.logging import correlation_paths
+from aws_lambda_powertools.metrics import MetricUnit
+from aws_lambda_powertools.utilities.typing import LambdaContext
+
+from service.handlers.models.env_vars import McpHandlerEnvVars
+from service.handlers.utils.mcp import mcp
+from service.handlers.utils.observability import logger, metrics, tracer
+from service.logic.math import add_two_numbers
+
+
+@mcp.tool()
+def math(a: int, b: int) -> int:
+    """Add two numbers together"""
+    if not isinstance(a, int) or not isinstance(b, int):
+        raise ValueError('Invalid input: a and b must be integers')
+    result = add_two_numbers(a, b)
+    metrics.add_metric(name='ValidMcpEvents', unit=MetricUnit.Count, value=1)
+    return result
+
+
+@init_environment_variables(model=McpHandlerEnvVars)
+@logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST)
+@metrics.log_metrics
+@tracer.capture_lambda_handler(capture_response=False)
+def lambda_handler(event: dict, context: LambdaContext) -> dict:
+    return mcp.handle_request(event, context)
+```
 
 ### Serverless MCP Template
 
@@ -111,6 +141,7 @@ The utilities cover multiple aspect of a production-ready service, including:
 * [Observability: Business KPIs Metrics](https://www.ranthebuilder.cloud/post/aws-lambda-cookbook-elevate-your-handler-s-code-part-3-business-domain-observability)
 * [Environment Variables](https://www.ranthebuilder.cloud/post/aws-lambda-cookbook-environment-variables)
 * [Input Validation](https://www.ranthebuilder.cloud/post/aws-lambda-cookbook-elevate-your-handler-s-code-part-5-input-validation)
+* [Hexagonal Architecture](https://www.ranthebuilder.cloud/post/learn-how-to-write-aws-lambda-functions-with-architecture-layers)
 * [CDK Best practices](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook)
 * [Serverless Monitoring](https://www.ranthebuilder.cloud/post/how-to-effortlessly-monitor-serverless-applications-with-cloudwatch-part-one)
 

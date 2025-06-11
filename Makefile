@@ -35,7 +35,7 @@ pre-commit:
 	poetry run pre-commit run -a --show-diff-on-failure
 
 mypy-lint:
-	poetry run mypy --pretty service cdk tests
+	poetry run mypy --pretty service cdk tests docs/examples
 
 deps:
 	poetry export --only=dev --format=requirements.txt > dev_requirements.txt

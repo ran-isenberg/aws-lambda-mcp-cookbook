@@ -69,11 +69,18 @@ The utilities cover multiple aspects of a production-ready service, including:
 * [**Observability: Monitoring and Tracing**](best_practices/tracer.md)
 * [**Observability: Business KPI Metrics**](best_practices/metrics.md)
 * [**Environment Variables**](best_practices/environment_variables.md)
+* [**Hexagonal Architecture**](https://www.ranthebuilder.cloud/post/learn-how-to-write-aws-lambda-functions-with-architecture-layers)
 * [**Input Validation**](best_practices/input_validation.md)
 * [**Serverless Monitoring**](https://www.ranthebuilder.cloud/post/how-to-effortlessly-monitor-serverless-applications-with-cloudwatch-part-one)
 * [**Learn How to Write AWS Lambda Functions with Three Architecture Layers**](https://www.ranthebuilder.cloud/post/learn-how-to-write-aws-lambda-functions-with-architecture-layers){:target="_blank" rel="noopener"}
 
 While the code examples are written in Python, the principles are valid to any supported AWS Lambda handler programming language.
+
+## Handler Examples
+
+```python hl_lines="7 12 27" title="mcp_handler.py"
+--8<-- "docs/examples/best_practices/mcp/mcp.py"
+```
 
 ## **License**
 
