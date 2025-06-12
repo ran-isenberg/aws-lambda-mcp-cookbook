@@ -6,6 +6,6 @@ def authenticate(event: dict, context: LambdaContext) -> None:
     # This is a placeholder for authentication logic.
     # In a real application, you would implement your authentication here.
     # or use IAM/cognito or lambda authorizers for authentication.
-    if 'Authorization' not in event.get('headers', {}):
-        raise ValueError('Unauthorized: Missing Authorization header')
+    # if 'Authorization' not in event.get('headers', {}):
+    #    raise ValueError('Unauthorized: Missing Authorization header')
     return
