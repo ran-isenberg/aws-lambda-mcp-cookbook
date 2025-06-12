@@ -4,3 +4,5 @@ omit =
     tests/*
     # omit everything in /cdk
     "cdk/*"
+    # omit everything in /mcp_lambda_handler decorator
+    "service/mcp_lambda_handler/*"

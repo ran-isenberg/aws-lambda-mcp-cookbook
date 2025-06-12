@@ -46,8 +46,6 @@ All AWS Lambda function configurations are saved as constants at the `cdk.servic
     - **API GW with Lambda Integration** - API GW with a Lambda integration POST /api/orders that triggers the Lambda function.
     - **AWS DynamoDB table** - stores request data. Created in the `api_db_construct.py` construct.
     - **AWS DynamoDB table** - stores idempotency data. Created in the `api_db_construct.py` construct.
-- Construct: **cdk.service.configuration.configuration_construct.py** which includes:
-    - AWS AppConfig configuration with an environment, application, configuration and deployment strategy. You can read more about it [here](best_practices/dynamic_configuration.md).
 
 ### **Infrastructure CDK & Security Tests**
 
