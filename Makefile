@@ -1,4 +1,4 @@
-.PHONY: dev lint mypy-lint complex coverage pre-commit sort deploy destroy deps unit infra-tests integration e2e coverage-tests docs lint-docs build format format-fix compare-openapi openapi pr watch update-deps
+.PHONY: dev lint mypy-lint complex coverage pre-commit sort deploy destroy deps unit infra-tests integration e2e coverage-tests docs lint-docs build format format-fix pr watch update-deps
 PYTHON := ".venv/bin/python3"
 .ONESHELL:  # run all commands in a single shell, ensuring it runs within a local virtual env
 
@@ -29,13 +29,13 @@ complex:
 	@echo "Running Radon"
 	poetry run radon cc -e 'tests/*,cdk.out/*,node_modules/*' .
 	@echo "Running xenon"
-	poetry run xenon --max-absolute B --max-modules A --max-average A -e 'tests/*,.venv/*,cdk.out/*,node_modules/*' .
+	poetry run xenon --max-absolute B --max-modules A --max-average A -e 'tests/*,.venv/*,cdk.out/*,node_modules/*,service/mcp_lambda_handler/*' .
 
 pre-commit:
 	poetry run pre-commit run -a --show-diff-on-failure
 
 mypy-lint:
-	poetry run mypy --pretty service cdk tests
+	poetry run mypy --pretty service cdk tests docs/examples
 
 deps:
 	poetry export --only=dev --format=requirements.txt > dev_requirements.txt
@@ -57,7 +57,7 @@ integration:
 e2e:
 	poetry run pytest tests/e2e  --cov-config=.coveragerc --cov=service --cov-report xml
 
-pr: deps format pre-commit complex lint lint-docs unit deploy coverage-tests e2e openapi
+pr: deps format pre-commit complex lint lint-docs unit deploy coverage-tests e2e
 
 coverage-tests:
 	poetry run pytest tests/unit tests/integration  --cov-config=.coveragerc --cov=service --cov-report xml
@@ -81,17 +81,3 @@ update-deps:
 	poetry update
 	pre-commit autoupdate
 	npm i --package-lock-only
-
-openapi:
-	poetry run python generate_openapi.py
-
-compare-openapi:
-	poetry run python generate_openapi.py --out-destination '.' --out-filename 'openapi_latest.json'
-	@if cmp --silent $(CURRENT_OPENAPI) $(LATEST_OPENAPI); then \
-		rm $(LATEST_OPENAPI); \
-		echo "Swagger file is up to date"; \
-	else \
-		echo "Swagger files are not equal, did you run 'make pr' or 'make openapi'?"; \
-		rm $(LATEST_OPENAPI); \
-		exit 1; \
-	fi

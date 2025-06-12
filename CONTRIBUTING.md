@@ -27,17 +27,17 @@ Contributions via pull requests are much appreciated. Before sending us a pull r
 
 1. You are working against the latest source on the **main** branch.
 2. You check existing open, and recently merged pull requests to make sure someone else hasn't addressed the problem already.
-3. You open an [issue](https://github.com/ran-isenberg/aws-lambda-handler-cookbook/issues) before you begin any implementation. We value your time and bandwidth. As such, any pull requests created on non-triaged issues might not be successful.
+3. You open an [issue](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/issues) before you begin any implementation. We value your time and bandwidth. As such, any pull requests created on non-triaged issues might not be successful.
 
 ### Dev setup
 
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/from-referrer/)
 
-Firstly, [fork the repository](https://github.com/ran-isenberg/aws-lambda-handler-cookbook/fork).
+Firstly, [fork the repository](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/fork).
 
 
 use `make dev` within your local virtual environment.
-For more information on getting started check out the [official documentation](https://ran-isenberg.github.io/aws-lambda-handler-cookbook/getting_started/)
+For more information on getting started check out the [official documentation](https://ran-isenberg.github.io/aws-lambda-mcp-cookbook/getting_started/)
 
 To send us a pull request, please follow these steps:
 

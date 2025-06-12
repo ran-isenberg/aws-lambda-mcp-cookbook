@@ -31,7 +31,6 @@ All steps can be run locally using the makefile. See details below:
 - Integration tests - run `make integration` in the IDE.
 - E2E tests  - run `make e2e` in the IDE
 - Code coverage tests  - run `make coverage-tests` in the IDE after CDK dep
-- OpenAPI Swagger file - run
 - Update GitHub documentation branch
 
 ### **Other Capabilities**
