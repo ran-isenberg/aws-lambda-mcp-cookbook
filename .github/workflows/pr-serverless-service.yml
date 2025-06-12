@@ -71,7 +71,7 @@ jobs:
       - name: Install dependencies
         run: make dev
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
         with:
           role-to-assume: ${{ secrets.AWS_ROLE }}
           role-session-name: ${{ env.SESSION_NAME }}
@@ -86,13 +86,6 @@ jobs:
         run: make deploy
       # NOTE: these run unit and integration tests
       # we can look into coverage collection only later to make it faster and less brittle (--collect-only)
-      - name: Check OpenAPI Spec breaking action
-        uses: oasdiff/oasdiff-action/breaking@1c611ffb1253a72924624aa4fb662e302b3565d3 # v0.0.16
-        with:
-          base: https://raw.githubusercontent.com/ran-isenberg/aws-lambda-handler-cookbook/main/docs/swagger/openapi.json
-          revision: ./docs/swagger/openapi.json
-      - name: Validate OpenAPI Documentation
-        run: make compare-openapi
       - name: Code coverage tests
         run: make coverage-tests
       - name: Codecov

@@ -25,14 +25,13 @@ class CrudMonitoring(Construct):
         id_: str,
         crud_api: aws_apigateway.RestApi,
         db: dynamodb.TableV2,
-        idempotency_table: dynamodb.TableV2,
         functions: list[_lambda.Function],
     ) -> None:
         super().__init__(scope, id_)
         self.id_ = id_
         self.notification_topic = self._build_topic()
         self._build_high_level_dashboard(crud_api, self.notification_topic)
-        self._build_low_level_dashboard(db, idempotency_table, functions, self.notification_topic)
+        self._build_low_level_dashboard(db, functions, self.notification_topic)
 
     def _build_topic(self) -> sns.Topic:
         key = kms.Key(
@@ -66,27 +65,25 @@ class CrudMonitoring(Construct):
                 action=SnsAlarmActionStrategy(on_alarm_topic=topic),
             ),
         )
-        high_level_facade.add_large_header('Order REST API High Level Dashboard')
+        high_level_facade.add_large_header('MCP Server High Level Dashboard')
         high_level_facade.monitor_api_gateway(
             api=crud_api,
             add5_xx_fault_rate_alarm={'internal_error': ErrorRateThreshold(max_error_rate=1)},
         )
         metric_factory = high_level_facade.create_metric_factory()
         create_metric = metric_factory.create_metric(
-            metric_name='ValidCreateOrderEvents',
+            metric_name='ValidMcpEvents',
             namespace=constants.METRICS_NAMESPACE,
             statistic=MetricStatistic.N,
             dimensions_map={constants.METRICS_DIMENSION_KEY: constants.SERVICE_NAME},
-            label='create order events',
+            label='MCP events',
             period=Duration.days(1),
         )
 
-        group = CustomMetricGroup(metrics=[create_metric], title='Daily Order Requests')
+        group = CustomMetricGroup(metrics=[create_metric], title='Daily MCP Requests')
         high_level_facade.monitor_custom(metric_groups=[group], human_readable_name='Daily KPIs', alarm_friendly_name='KPIs')
 
-    def _build_low_level_dashboard(
-        self, db: dynamodb.TableV2, idempotency_table: dynamodb.TableV2, functions: list[_lambda.Function], topic: sns.Topic
-    ):
+    def _build_low_level_dashboard(self, db: dynamodb.TableV2, functions: list[_lambda.Function], topic: sns.Topic):
         low_level_facade = MonitoringFacade(
             self,
             f'{self.id_}LowFacade',
@@ -96,7 +93,7 @@ class CrudMonitoring(Construct):
                 action=SnsAlarmActionStrategy(on_alarm_topic=topic),
             ),
         )
-        low_level_facade.add_large_header('Orders REST API Low Level Dashboard')
+        low_level_facade.add_large_header('MCP Server Low Level Dashboard')
         for func in functions:
             low_level_facade.monitor_lambda_function(
                 lambda_function=func,
@@ -110,4 +107,3 @@ class CrudMonitoring(Construct):
             )
 
         low_level_facade.monitor_dynamo_table(table=db, billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST)
-        low_level_facade.monitor_dynamo_table(table=idempotency_table, billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST)

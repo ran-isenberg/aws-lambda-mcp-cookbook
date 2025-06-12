@@ -1,7 +1,7 @@
 site_name: AWS Lambda Handler CookBook
 site_description: AWS Lambda Handler CookBook
 site_author: Ran Isenberg
-repo_url: https://github.com/ran-isenberg/aws-lambda-handler-cookbook
+repo_url: https://github.com/ran-isenberg/aws-lambda-mcp-cookbook
 edit_uri: edit/main/docs
 
 nav:
@@ -9,7 +9,6 @@ nav:
   - Getting Started: getting_started.md
   - CDK: cdk.md
   - Pipeline: pipeline.md
-  - Swagger: swagger/swagger.md
   - Best Practices:
       - best_practices/logger.md
       - best_practices/tracer.md
@@ -17,9 +16,7 @@ nav:
       - best_practices/environment_variables.md
       - Architecture Layers: https://www.ranthebuilder.cloud/post/learn-how-to-write-aws-lambda-functions-with-architecture-layers" target="_blank"
       - best_practices/input_validation.md
-      - best_practices/dynamic_configuration.md
       - best_practices/monitoring.md
-      - Idempotency: https://www.ranthebuilder.cloud/post/serverless-api-idempotency-with-aws-lambda-powertools-and-cdk" target="_blank"
       - CDK Best practices: https://www.ranthebuilder.cloud/post/aws-cdk-best-practices-from-the-trenches" target="_blank"
       - Testing Best practices: https://www.ranthebuilder.cloud/post/guide-to-serverless-lambda-testing-best-practices-part-1" target="_blank"
 
@@ -100,12 +97,9 @@ extra_css:
   - stylesheets/extra.css
 
 extra:
-  analytics:
-    provider: google
-    property: G-VN803S5YZ3
   social:
     - icon: fontawesome/brands/github-alt
-      link: https://github.com/ran-isenberg/aws-lambda-handler-cookbook
+      link: https://github.com/ran-isenberg/aws-lambda-mcp-cookbook
     - icon: fontawesome/brands/twitter
       link: https://twitter.com/IsenbergRan
     - icon: fontawesome/brands/linkedin

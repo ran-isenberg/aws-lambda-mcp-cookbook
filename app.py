@@ -9,8 +9,8 @@ from cdk.service.utils import get_stack_name
 
 account = client('sts').get_caller_identity()['Account']
 region = session.Session().region_name
-environment = os.getenv('ENVIRONMENT', 'dev')
 app = App()
+environment = os.getenv('ENVIRONMENT', 'dev')
 my_stack = ServiceStack(
     scope=app,
     id=get_stack_name(),
