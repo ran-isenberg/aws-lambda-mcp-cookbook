@@ -61,7 +61,7 @@ Starting a production grade Serverless MCP can be overwhelming. You need to figu
 
 This project aims to reduce cognitive load and answer these questions for you by providing a production grade Python Serverless MCP server blueprint that implements best practices for AWS Lambda, MCP, Serverless CI/CD, and AWS CDK in one project.
 
-The MCP server uses JSON RPC over HTTP (non streamable) via API Gateway's body payload parameter. See integration tests and see how the test event is generated.
+The MCP server uses JSON RPC over HTTP (non stream-able) via API Gateway's body payload parameter. See integration tests and see how the test event is generated.
 
 ```python
 from aws_lambda_env_modeler import init_environment_variables
@@ -70,6 +70,7 @@ from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
 from service.handlers.models.env_vars import McpHandlerEnvVars
+from service.handlers.utils.authentication import authenticate
 from service.handlers.utils.mcp import mcp
 from service.handlers.utils.observability import logger, metrics, tracer
 from service.logic.math import add_two_numbers
@@ -90,6 +91,7 @@ def math(a: int, b: int) -> int:
 @metrics.log_metrics
 @tracer.capture_lambda_handler(capture_response=False)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
+    authenticate(event, context)
     return mcp.handle_request(event, context)
 ```
 
@@ -147,6 +149,12 @@ The utilities cover multiple aspect of a production-ready service, including:
 * [CDK Best practices](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook)
 * [Serverless Monitoring](https://www.ranthebuilder.cloud/post/how-to-effortlessly-monitor-serverless-applications-with-cloudwatch-part-one)
 
+
+## Security
+
+- WAF connected in production accounts (requires having an environment variable during deployment called 'ENVIRONMENT' with a value of 'production')
+- Auth/Authz function placeholder in the mcp.py handler function - see authentication.py
+- It is recommended to either use IAM/Cognito/Lambda authorizer or use the authentication.py and implement identity provider token validation flow.
 
 ## Code Contributions
 

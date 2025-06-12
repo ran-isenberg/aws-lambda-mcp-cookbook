@@ -4,6 +4,7 @@ from aws_lambda_powertools.metrics import MetricUnit
 from aws_lambda_powertools.utilities.typing import LambdaContext
 
 from service.handlers.models.env_vars import McpHandlerEnvVars
+from service.handlers.utils.authentication import authenticate
 from service.handlers.utils.mcp import mcp
 from service.handlers.utils.observability import logger, metrics, tracer
 from service.logic.math import add_two_numbers
@@ -24,4 +25,5 @@ def math(a: int, b: int) -> int:
 @metrics.log_metrics
 @tracer.capture_lambda_handler(capture_response=False)
 def lambda_handler(event: dict, context: LambdaContext) -> dict:
+    authenticate(event, context)
     return mcp.handle_request(event, context)

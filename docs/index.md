@@ -78,6 +78,12 @@ The utilities cover multiple aspects of a production-ready service, including:
 
 While the code examples are written in Python, the principles are valid to any supported AWS Lambda handler programming language.
 
+## Security
+
+- WAF connected in production accounts (requires having an environment variable during deployment called 'ENVIRONMENT' with a value of 'production')
+- Auth/Authz function placeholder in the mcp.py handler function - see authentication.py
+- It is recommended to either use IAM/Cognito/Lambda authorizer or use the authentication.py and implement identity provider token validation flow.
+
 ## Handler Examples
 
 ```python hl_lines="7 12 34" title="service/handlers/mcp.py"
