@@ -2,7 +2,7 @@
 
 [![license](https://img.shields.io/github/license/ran-isenberg/aws-lambda-mcp-cookbook)](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/master/LICENSE)
 ![PythonSupport](https://img.shields.io/static/v1?label=python&message=3.13&color=blue?style=flat-square&logo=python)
-[![codecov](https://codecov.io/gh/ran-isenberg/aws-lambda-mcp-cookbook/branch/main/graph/badge.svg?token=P2K7K4KICF)](https://codecov.io/gh/ran-isenberg/aws-lambda-mcp-cookbook)
+[![codecov](https://codecov.io/github/ran-isenberg/aws-lambda-mcp-cookbook/graph/badge.svg?token=x9asxTtNQZ)](https://codecov.io/github/ran-isenberg/aws-lambda-mcp-cookbook)
 ![version](https://img.shields.io/github/v/release/ran-isenberg/aws-lambda-mcp-cookbook)
 ![github-star-badge](https://img.shields.io/github/stars/ran-isenberg/aws-lambda-mcp-cookbook.svg?style=social)
 ![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ran-isenberg/aws-lambda-mcp-cookbook/badge)
