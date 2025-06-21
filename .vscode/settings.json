@@ -4,6 +4,7 @@
         "Codecov",
         "getlogin",
         "getuid",
+        "MCPAPI",
         "mkdocs",
         "mypy",
         "ranisenberg",

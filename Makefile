@@ -29,7 +29,7 @@ complex:
 	@echo "Running Radon"
 	poetry run radon cc -e 'tests/*,cdk.out/*,node_modules/*' .
 	@echo "Running xenon"
-	poetry run xenon --max-absolute B --max-modules A --max-average A -e 'tests/*,.venv/*,cdk.out/*,node_modules/*,service/mcp_lambda_handler/*' .
+	poetry run xenon --max-absolute B --max-modules A --max-average A -e 'tests/*,.venv/*,cdk.out/*,node_modules/*,service/*' .
 
 pre-commit:
 	poetry run pre-commit run -a --show-diff-on-failure

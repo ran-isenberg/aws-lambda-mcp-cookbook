@@ -156,6 +156,11 @@ The utilities cover multiple aspect of a production-ready service, including:
 - Auth/Authz function placeholder in the mcp.py handler function - see authentication.py
 - It is recommended to either use IAM/Cognito/Lambda authorizer or use the authentication.py and implement identity provider token validation flow.
 
+### Known Issues:
+- There might be security issues with this implementation, MCP is very new and has many issues.
+- Session saving - there's no match validation between session id and user id/tenant id. This is a TODO item.
+- It is not possible to manually update session data, only fetch.
+
 ## Code Contributions
 
 Code contributions are welcomed. Read this [guide.](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/CONTRIBUTING.md)

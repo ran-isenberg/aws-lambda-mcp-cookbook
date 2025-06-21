@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-## Taken from https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler
+## originally from https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler but heavily refactored
 """Session management for MCP server with pluggable storage."""
 
 import time
@@ -81,26 +81,6 @@ class SessionStore(ABC):
         pass
 
 
-class NoOpSessionStore(SessionStore):
-    """A no-op session store that doesn't actually store sessions."""
-
-    def create_session(self, session_data: Optional[Dict[str, Any]] = None) -> str:
-        """Create a new session ID but don't store anything."""
-        return str(uuid.uuid4())
-
-    def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Return an empty session data."""
-        return {}
-
-    def update_session(self, session_id: str, session_data: Dict[str, Any]) -> bool:
-        """Pretend to update but do nothing."""
-        return True
-
-    def delete_session(self, session_id: str) -> bool:
-        """Pretend to delete but do nothing."""
-        return True
-
-
 class DynamoDBSessionStore(SessionStore):
     """Manages MCP sessions using DynamoDB."""
 
@@ -159,7 +139,7 @@ class DynamoDBSessionStore(SessionStore):
         }
 
         self.table.put_item(Item=item)
-        logger.info(f'Created session {session_id}')
+        logger.debug('created session id', extra={'session_id': session_id})
 
         return session_id
 
@@ -182,13 +162,14 @@ class DynamoDBSessionStore(SessionStore):
 
             # Check if session has expired
             if item.get('expires_at', 0) < time.time():
+                logger.debug('Session expired', extra={'session_id': session_id})
                 self.delete_session(session_id)
                 return None
 
             return item.get('data', {})
 
-        except Exception as e:
-            logger.error(f'Error getting session {session_id}: {e}')
+        except Exception:
+            logger.exception('Error getting session', extra={'session_id': session_id})
             return None
 
     def update_session(self, session_id: str, session_data: Dict[str, Any]) -> bool:
@@ -210,8 +191,8 @@ class DynamoDBSessionStore(SessionStore):
                 ExpressionAttributeValues={':data': session_data},
             )
             return True
-        except Exception as e:
-            logger.error(f'Error updating session {session_id}: {e}')
+        except Exception:
+            logger.exception('Error updating session', extra={'session_id': session_id})
             return False
 
     def delete_session(self, session_id: str) -> bool:
@@ -226,8 +207,8 @@ class DynamoDBSessionStore(SessionStore):
         """
         try:
             self.table.delete_item(Key={'session_id': session_id})
-            logger.info(f'Deleted session {session_id}')
+            logger.debug('Deleted session', extra={'session_id': session_id})
             return True
-        except Exception as e:
-            logger.error(f'Error deleting session {session_id}: {e}')
+        except Exception:
+            logger.exception('Error deleting session', extra={'session_id': session_id})
             return False

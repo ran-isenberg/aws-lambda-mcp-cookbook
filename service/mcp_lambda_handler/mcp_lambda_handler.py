@@ -11,34 +11,50 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-## Taken from https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler but made changes
+## originally from https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler but heavily refactored
 import functools
+import http
 import inspect
-import json
 from contextvars import ContextVar
 from enum import Enum
 from typing import (
     Any,
     Callable,
     Dict,
-    Generic,
     List,
     Optional,
-    TypeVar,
-    Union,
     get_args,
     get_origin,
     get_type_hints,
 )
 
+from aws_lambda_powertools.utilities.parser import parse
+
 from service.handlers.utils.observability import logger
-from service.mcp_lambda_handler.session import DynamoDBSessionStore, NoOpSessionStore, SessionStore
+from service.mcp_lambda_handler.constants import (
+    CONTENT_TYPE_JSON,
+    ERROR_INTERNAL,
+    ERROR_INVALID_PARAMS,
+    ERROR_INVALID_REQUEST,
+    ERROR_METHOD_NOT_FOUND,
+    ERROR_PARSE,
+    ERROR_SERVER,
+    MCP_PROTOCOL_VERSION,
+    MCP_VERSION,
+)
+from service.mcp_lambda_handler.models import (
+    MCPAPIGatewayProxyEventBase,
+    MCPDeleteAPIGatewayProxyEvent,
+    MCPMethod,
+    MCPPostAPIGatewayProxyEvent,
+)
+from service.mcp_lambda_handler.session import SessionStore
+from service.mcp_lambda_handler.session_data import SessionData
 from service.mcp_lambda_handler.types import (
     Capabilities,
     ErrorContent,
     InitializeResult,
     JSONRPCError,
-    JSONRPCRequest,
     JSONRPCResponse,
     ServerInfo,
     TextContent,
@@ -47,62 +63,24 @@ from service.mcp_lambda_handler.types import (
 # Context variable to store current session ID
 current_session_id: ContextVar[Optional[str]] = ContextVar('current_session_id', default=None)
 
-T = TypeVar('T')
-
-
-class SessionData(Generic[T]):
-    """Helper class for type-safe session data access."""
-
-    def __init__(self, data: Dict[str, Any]):
-        """Initialize the class."""
-        self._data = data
-
-    def get(self, key: str, default: T = None) -> T:
-        """Get a value from session data with type safety."""
-        return self._data.get(key, default)
-
-    def set(self, key: str, value: T) -> None:
-        """Set a value in session data."""
-        self._data[key] = value
-
-    def raw(self) -> Dict[str, Any]:
-        """Get the raw dictionary data."""
-        return self._data
-
 
 class MCPLambdaHandler:
     """A class to handle MCP (Model Context Protocol) HTTP events in AWS Lambda."""
 
-    def __init__(
-        self,
-        name: str,
-        version: str = '1.0.0',
-        session_store: Optional[Union[SessionStore, str]] = None,
-    ):
+    def __init__(self, name: str, version: str, session_store: SessionStore):
         """Initialize the MCP handler.
 
         Args:
             name: Handler name
             version: Handler version
-            session_store: Optional session storage. Can be:
-                         - None for no sessions
-                         - A SessionStore instance
-                         - A string for DynamoDB table name (for backwards compatibility)
+            session_store: A SessionStore instance
 
         """
         self.name = name
         self.version = version
         self.tools: Dict[str, Dict] = {}
         self.tool_implementations: Dict[str, Callable] = {}
-
-        # Configure session storage
-        if session_store is None:
-            self.session_store = NoOpSessionStore()
-        elif isinstance(session_store, str):
-            # Backwards compatibility - treat string as DynamoDB table name
-            self.session_store = DynamoDBSessionStore(table_name=session_store)
-        else:
-            self.session_store = session_store
+        self.session_store = session_store
 
     def get_session(self) -> Optional[SessionData]:
         """Get the current session data wrapper.
@@ -271,12 +249,13 @@ class MCPLambdaHandler:
         error_content: Optional[List[Dict]] = None,
         session_id: Optional[str] = None,
         status_code: Optional[int] = None,
+        data: Optional[Dict] = None,
     ) -> Dict:
         """Create a standardized error response."""
-        error = JSONRPCError(code=code, message=message)
+        error = JSONRPCError(code=code, message=message, data=data)
         response = JSONRPCResponse(jsonrpc='2.0', id=request_id, error=error, errorContent=error_content)
 
-        headers = {'Content-Type': 'application/json', 'MCP-Version': '0.6'}
+        headers = {'Content-Type': CONTENT_TYPE_JSON, 'MCP-Version': MCP_VERSION}
         if session_id:
             headers['MCP-Session-Id'] = session_id
 
@@ -289,154 +268,187 @@ class MCPLambdaHandler:
     def _error_code_to_http_status(self, error_code: int) -> int:
         """Map JSON-RPC error codes to HTTP status codes."""
         error_map = {
-            -32700: 400,  # Parse error
-            -32600: 400,  # Invalid Request
-            -32601: 404,  # Method not found
-            -32602: 400,  # Invalid params
-            -32603: 500,  # Internal error
+            ERROR_PARSE: http.HTTPStatus.BAD_REQUEST.value,  # Parse error
+            ERROR_INVALID_REQUEST: http.HTTPStatus.BAD_REQUEST.value,  # Invalid Request
+            ERROR_METHOD_NOT_FOUND: http.HTTPStatus.NOT_FOUND.value,  # Method not found
+            ERROR_INVALID_PARAMS: http.HTTPStatus.BAD_REQUEST.value,  # Invalid params
+            ERROR_INTERNAL: http.HTTPStatus.INTERNAL_SERVER_ERROR.value,  # Internal error
         }
-        return error_map.get(error_code, 500)
+        return error_map.get(error_code, http.HTTPStatus.INTERNAL_SERVER_ERROR.value)
 
     def _create_success_response(self, result: Any, request_id: str | None, session_id: Optional[str] = None) -> Dict:
         """Create a standardized success response."""
         response = JSONRPCResponse(jsonrpc='2.0', id=request_id, result=result)
 
-        headers = {'Content-Type': 'application/json', 'MCP-Version': '0.6'}
+        headers = {'Content-Type': CONTENT_TYPE_JSON, 'MCP-Version': MCP_VERSION}
         if session_id:
             headers['MCP-Session-Id'] = session_id
 
-        return {'statusCode': 200, 'body': response.model_dump_json(), 'headers': headers}
+        return {'statusCode': http.HTTPStatus.OK.value, 'body': response.model_dump_json(), 'headers': headers}
 
-    def handle_request(self, event: Dict, context: Any) -> Dict:  # noqa: C901
+    def handle_request(self, event: Dict, context: Any) -> Dict:
         """Handle an incoming Lambda request."""
         request_id = None
         session_id = None
+        current_session_id.set(None)
+
+        # Get the HTTP method to determine which model to use
+        http_method = event.get('httpMethod')
+        logger.debug('HTTP method', extra={'http_method': http_method})
 
         try:
-            # Log the full event for debugging
-            logger.debug(f'Received event: {event}')
-
-            # Get headers (case-insensitive)
-            headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
-
-            # Get session ID from headers if present
-            session_id = headers.get('mcp-session-id')
-
-            # Set current session ID in context
-            if session_id:
-                current_session_id.set(session_id)
-                logger.debug('session_id found', extra={'session_id': session_id})
+            # Use the appropriate model based on HTTP method
+            if http_method == 'DELETE':
+                parsed_event = parse(event=event, model=MCPDeleteAPIGatewayProxyEvent)
+                request_id = None  # DELETE requests don't have a request_id
+            elif http_method == 'POST':
+                parsed_event = parse(event=event, model=MCPPostAPIGatewayProxyEvent)
+                request_id = parsed_event.body.id if hasattr(parsed_event, 'body') else None
             else:
-                current_session_id.set(None)
+                return self._create_error_response(ERROR_INVALID_REQUEST, f'Unsupported HTTP method: {http_method}')
+        except Exception:
+            logger.exception('Error parsing event', exc_info=True)
+            return self._create_error_response(code=ERROR_INVALID_REQUEST, message='Parse error')
 
-            # Check HTTP method for session deletion
-            if event.get('httpMethod') == 'DELETE' and session_id:
-                if self.session_store.delete_session(session_id):
-                    return {'statusCode': 204}
+        # Set current session ID in context
+        session_id = parsed_event.mcp_session_id
+        if session_id:
+            current_session_id.set(session_id)
+            logger.debug('session_id found', extra={'session_id': session_id})
+
+        # Switch-like structure for HTTP method handling
+        try:
+            match parsed_event.httpMethod:
+                case 'DELETE':
+                    return self._handle_http_delete(parsed_event, request_id, session_id)
+                case 'POST':
+                    return self._handle_http_post(parsed_event, request_id, session_id)
+                case _:  # Default case for unsupported methods
+                    return self._create_error_response(ERROR_INVALID_REQUEST, f'Unsupported HTTP method: {parsed_event.httpMethod}')
+        except Exception:
+            logger.exception('Error handling request', exc_info=True)
+            return self._create_error_response(
+                code=ERROR_INTERNAL,
+                message='Internal server error',
+                request_id=request_id,
+                session_id=session_id,
+            )
+
+    def _handle_initialize(self, parsed_event: MCPAPIGatewayProxyEventBase, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+        """Handle an 'initialize' MCP method request."""
+        logger.info('Handling initialize request')
+        # Create new session
+        session_id = self.session_store.create_session()
+        current_session_id.set(session_id)
+        logger.debug('session_id created', extra={'session_id': session_id})
+        result = InitializeResult(
+            protocolVersion=MCP_PROTOCOL_VERSION,
+            serverInfo=ServerInfo(name=self.name, version=self.version),
+            capabilities=Capabilities(tools={'list': True, 'call': True}),
+        )
+        return self._create_success_response(result.model_dump(), request_id, session_id)
+
+    def _handle_tools_list(self, parsed_event: MCPAPIGatewayProxyEventBase, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+        """Handle a 'tools/list' MCP method request."""
+        logger.info('Handling tools/list request')
+        return self._create_success_response({'tools': list(self.tools.values())}, request_id, session_id)
+
+    def _handle_tools_call(self, parsed_event: MCPAPIGatewayProxyEventBase, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+        """Handle a 'tools/call' MCP method request."""
+        if not parsed_event.body.params:
+            return self._create_error_response(ERROR_INVALID_PARAMS, 'Missing parameters for tools/call', request_id, session_id=session_id)
+
+        if not self._validate_session(request_id, session_id):
+            return self._create_error_response(ERROR_SERVER, 'Invalid or expired session', request_id, status_code=http.HTTPStatus.NOT_FOUND.value)
+
+        tool_name = parsed_event.body.params.get('name')
+        tool_args = parsed_event.body.params.get('arguments', {})
+
+        if tool_name not in self.tools:
+            return self._create_error_response(ERROR_METHOD_NOT_FOUND, f"Tool '{tool_name}' not found", request_id, session_id=session_id)
+
+        try:
+            # Convert enum string values to enum objects
+            converted_args = {}
+            tool_func = self.tool_implementations[tool_name]
+            hints = get_type_hints(tool_func)
+
+            for arg_name, arg_value in tool_args.items():
+                arg_type = hints.get(arg_name)
+                if isinstance(arg_type, type) and issubclass(arg_type, Enum):
+                    converted_args[arg_name] = arg_type(arg_value)
                 else:
-                    return {'statusCode': 404}
+                    converted_args[arg_name] = arg_value
 
-            # Validate content type
-            if headers.get('content-type') != 'application/json':
-                return self._create_error_response(-32700, 'Unsupported Media Type')
-
-            try:
-                body = json.loads(event['body'])
-                logger.debug(f'Parsed request body: {body}')
-                request_id = body.get('id') if isinstance(body, dict) else None
-
-                # Check if this is a notification (no id field)
-                if isinstance(body, dict) and 'id' not in body:
-                    logger.debug('Request is a notification')
-                    return {
-                        'statusCode': 204,
-                        'body': '',
-                        'headers': {'Content-Type': 'application/json', 'MCP-Version': '0.6'},
-                    }
-
-                # Validate basic JSON-RPC structure
-                if not isinstance(body, dict) or body.get('jsonrpc') != '2.0' or 'method' not in body:
-                    return self._create_error_response(-32700, 'Parse error', request_id)
-
-            except json.JSONDecodeError:
-                return self._create_error_response(-32700, 'Parse error')
-
-            # Parse and validate the request
-            request = JSONRPCRequest.model_validate(body)
-            logger.debug(f'Validated request: {request}')
-
-            # Handle initialization request
-            if request.method == 'initialize':
-                logger.info('Handling initialize request')
-                # Create new session
-                session_id = self.session_store.create_session()
-                current_session_id.set(session_id)
-                logger.debug('session_id created', extra={'session_id': session_id})
-                result = InitializeResult(
-                    protocolVersion='2024-11-05',
-                    serverInfo=ServerInfo(name=self.name, version=self.version),
-                    capabilities=Capabilities(tools={'list': True, 'call': True}),
-                )
-                return self._create_success_response(result.model_dump(), request.id, session_id)
-
-            # For all other requests, validate session if provided
-            if session_id:
-                session_data = self.session_store.get_session(session_id)
-                if session_data is None:
-                    return self._create_error_response(-32000, 'Invalid or expired session', request.id, status_code=404)
-            elif request.method != 'initialize' and not isinstance(self.session_store, NoOpSessionStore):
-                return self._create_error_response(-32000, 'Session required', request.id, status_code=400)
-
-            # Handle tools/list request
-            if request.method == 'tools/list':
-                logger.info('Handling tools/list request')
-                return self._create_success_response({'tools': list(self.tools.values())}, request.id, session_id)
-
-            # Handle tool calls
-            if request.method == 'tools/call' and request.params:
-                tool_name = request.params.get('name')
-                tool_args = request.params.get('arguments', {})
-
-                if tool_name not in self.tools:
-                    return self._create_error_response(-32601, f"Tool '{tool_name}' not found", request.id, session_id=session_id)
-
-                try:
-                    # Convert enum string values to enum objects
-                    converted_args = {}
-                    tool_func = self.tool_implementations[tool_name]
-                    hints = get_type_hints(tool_func)
-
-                    for arg_name, arg_value in tool_args.items():
-                        arg_type = hints.get(arg_name)
-                        if isinstance(arg_type, type) and issubclass(arg_type, Enum):
-                            converted_args[arg_name] = arg_type(arg_value)
-                        else:
-                            converted_args[arg_name] = arg_value
-
-                    result = tool_func(**converted_args)
-                    content = [TextContent(text=str(result)).model_dump()]
-                    return self._create_success_response({'content': content}, request.id, session_id)
-                except Exception as e:
-                    logger.error(f'Error executing tool {tool_name}: {e}')
-                    error_content = [ErrorContent(text=str(e)).model_dump()]
-                    return self._create_error_response(
-                        -32603,
-                        f'Error executing tool: {str(e)}',
-                        request.id,
-                        error_content,
-                        session_id,
-                    )
-
-            # Handle pings
-            if request.method == 'ping':
-                return self._create_success_response({}, request.id, session_id)
-
-            # Handle unknown methods
-            return self._create_error_response(-32601, f'Method not found: {request.method}', request.id, session_id=session_id)
-
+            result = tool_func(**converted_args)
+            content = [TextContent(text=str(result)).model_dump()]
+            return self._create_success_response({'content': content}, request_id, session_id)
         except Exception as e:
-            logger.error(f'Error processing request: {str(e)}', exc_info=True)
-            return self._create_error_response(-32000, str(e), request_id, session_id=session_id)
-        finally:
-            # Clear session context
-            current_session_id.set(None)
+            logger.exception(f'Error executing tool {tool_name}: {e}')
+            error_content = [ErrorContent(text=str(e)).model_dump()]
+            return self._create_error_response(
+                ERROR_INTERNAL,
+                f'Error executing tool: {str(e)}',
+                request_id,
+                error_content,
+                session_id,
+            )
+
+    def _handle_ping(self, parsed_event: MCPAPIGatewayProxyEventBase, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+        """Handle a 'ping' MCP method request."""
+        logger.info('Handling ping request')
+        return self._create_success_response({}, request_id, session_id)
+
+    def _handle_http_delete(self, parsed_event: MCPDeleteAPIGatewayProxyEvent, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+        """Handle HTTP DELETE requests, used for session deletion."""
+        if session_id:
+            logger.debug('deleting session', extra={'session_id': session_id})
+            self.session_store.delete_session(session_id)
+            return {'statusCode': http.HTTPStatus.NO_CONTENT.value}
+        else:
+            logger.debug('session not found, cant delete session', extra={'session_id': session_id})
+            return {'statusCode': http.HTTPStatus.NOT_FOUND.value}
+
+    def _handle_http_post(self, parsed_event: MCPPostAPIGatewayProxyEvent, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+        """Handle HTTP POST requests containing JSON-RPC calls."""
+        # Map of method handlers
+        method_handlers = {
+            MCPMethod.INITIALIZE: self._handle_initialize,
+            MCPMethod.TOOLS_LIST: self._handle_tools_list,
+            MCPMethod.TOOLS_CALL: self._handle_tools_call,
+            MCPMethod.PING: self._handle_ping,
+        }
+
+        if parsed_event.headers.content_type != CONTENT_TYPE_JSON:
+            return self._create_error_response(ERROR_PARSE, 'Unsupported Media Type')
+
+        # Check if this is a notification (no id field)
+        if parsed_event.body.method == MCPMethod.NOTIFICATION:
+            logger.debug('Request is a notification')
+            return {
+                'statusCode': http.HTTPStatus.ACCEPTED.value,  # MCP spec requires 202 Accepted for notifications
+                'body': '',
+                'headers': {'Content-Type': CONTENT_TYPE_JSON, 'MCP-Version': MCP_VERSION},
+            }
+        if not session_id:
+            logger.debug('No session ID provided', extra={'session_id': session_id})
+            # If no session ID is provided, we assume this is an initialize request
+            if parsed_event.body.method != MCPMethod.INITIALIZE:
+                return self._create_error_response(
+                    ERROR_INVALID_REQUEST, 'Session required', request_id, status_code=http.HTTPStatus.BAD_REQUEST.value
+                )
+
+        # Use method handlers dictionary to dispatch to the appropriate handler
+        if parsed_event.body.method in method_handlers:
+            return method_handlers[parsed_event.body.method](parsed_event, request_id, session_id)
+
+        # Handle unknown methods
+        return self._create_error_response(ERROR_METHOD_NOT_FOUND, f'Method not found: {parsed_event.body.method}', request_id, session_id=session_id)
+
+    def _validate_session(self, request_id: str, session_id: str) -> bool:
+        """Validate the session ID."""
+        logger.debug('Validating session', extra={'session_id': session_id})
+        session_data = self.session_store.get_session(session_id)
+        if session_data is None:
+            return False
+        return True

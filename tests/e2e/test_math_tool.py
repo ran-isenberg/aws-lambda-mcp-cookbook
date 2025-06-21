@@ -23,11 +23,13 @@ async def test_e2e_math_tool(api_gateway_url):
             # Initialize the connection
             await session.initialize()
 
+            tools_response = await session.list_tools()
+            # Verify the math tool is available
+            assert 'math' == tools_response.tools[0].name, 'Math tool not found in available tools'
+
             # Call a tool
             tool_result = await session.call_tool('math', {'a': a, 'b': b})
             # Verify the result
             assert tool_result.content is not None
             assert len(tool_result.content) == 1
             assert tool_result.content[0].text == str(expected_sum), f'Expected {expected_sum}, got {tool_result.content[0].text}'
-
-            print(f'Successfully added {a} + {b} = {expected_sum}')

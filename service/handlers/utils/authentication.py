@@ -8,4 +8,6 @@ def authenticate(event: dict, context: LambdaContext) -> None:
     # or use IAM/cognito or lambda authorizers for authentication.
     # if 'Authorization' not in event.get('headers', {}):
     #    raise ValueError('Unauthorized: Missing Authorization header')
+
+    # Important: validate that session id matches the user id
     return

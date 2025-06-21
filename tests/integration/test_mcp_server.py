@@ -107,7 +107,7 @@ def test_invalid_session():
     lambda_response = lambda_handler(event, context)
 
     # Verify the response indicates an invalid session
-    assert lambda_response['statusCode'] == HTTPStatus.NOT_FOUND
+    assert lambda_response['statusCode'] == HTTPStatus.NOT_FOUND.value
     assert lambda_response['headers']['Content-Type'] == 'application/json'
 
     # Validate the error message
@@ -127,12 +127,12 @@ def test_missing_session():
     lambda_response = lambda_handler(event, context)
 
     # Verify the response indicates a session is required
-    assert lambda_response['statusCode'] == HTTPStatus.BAD_REQUEST
+    assert lambda_response['statusCode'] == HTTPStatus.BAD_REQUEST.value
     assert lambda_response['headers']['Content-Type'] == 'application/json'
 
     # Validate the error message
     lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
-    assert lambda_response_body.error.code == -32000
+    assert lambda_response_body.error.code == -32600
     assert lambda_response_body.error.message == 'Session required'
 
 
@@ -161,7 +161,7 @@ def test_session_deletion(session_id):
     lambda_response = lambda_handler(event, context)
 
     # Verify the response indicates successful deletion
-    assert lambda_response['statusCode'] == HTTPStatus.NO_CONTENT
+    assert lambda_response['statusCode'] == HTTPStatus.NO_CONTENT.value
 
     # Now try to use the deleted session
     jsonrpc_payload = {'jsonrpc': '2.0', 'id': '8', 'method': 'tools/call', 'params': {'name': 'math', 'arguments': {'a': 1, 'b': 2}}}
@@ -169,7 +169,7 @@ def test_session_deletion(session_id):
     lambda_response = lambda_handler(event, context)
 
     # Verify the response indicates an invalid session
-    assert lambda_response['statusCode'] == HTTPStatus.NOT_FOUND
+    assert lambda_response['statusCode'] == HTTPStatus.NOT_FOUND.value
     lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
     assert lambda_response_body.error.message == 'Invalid or expired session'
 
@@ -180,12 +180,12 @@ def test_jsonrpc_notification(session_id):
     context = generate_context()
 
     # Create a notification (request without an ID)
-    jsonrpc_payload = {'jsonrpc': '2.0', 'method': 'tools/call', 'params': {'name': 'math', 'arguments': {'a': 5, 'b': 7}}}
+    jsonrpc_payload = {'jsonrpc': '2.0', 'method': 'notifications/initialized'}
     event = generate_lambda_event(jsonrpc_payload, session_id=session_id)
     lambda_response = lambda_handler(event, context)
 
-    # Notifications should return 204 No Content
-    assert lambda_response['statusCode'] == HTTPStatus.NO_CONTENT
+    # Notifications should return 202 Accepted per MCP spec
+    assert lambda_response['statusCode'] == HTTPStatus.ACCEPTED.value
     assert lambda_response['body'] == ''
     assert 'Content-Type' in lambda_response['headers']
     assert 'MCP-Version' in lambda_response['headers']
@@ -211,9 +211,9 @@ def test_invalid_jsonrpc_structure(session_id):
         lambda_response = lambda_handler(event, context)
 
         # Verify the response indicates parse error
-        assert lambda_response['statusCode'] == HTTPStatus.BAD_REQUEST, f'Case {i} failed with status {lambda_response["statusCode"]}'
+        assert lambda_response['statusCode'] == HTTPStatus.BAD_REQUEST.value, f'Case {i} failed with status {lambda_response["statusCode"]}'
         lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
-        assert lambda_response_body.error.code == -32700
+        assert lambda_response_body.error.code == -32600
         assert lambda_response_body.error.message == 'Parse error'
 
 
@@ -240,9 +240,9 @@ def test_malformed_json():
     lambda_response = lambda_handler(event, context)
 
     # Verify the response indicates a JSON parse error
-    assert lambda_response['statusCode'] == HTTPStatus.BAD_REQUEST
+    assert lambda_response['statusCode'] == HTTPStatus.BAD_REQUEST.value
     lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
-    assert lambda_response_body.error.code == -32700
+    assert lambda_response_body.error.code == -32600
     assert lambda_response_body.error.message == 'Parse error'
 
 
@@ -257,6 +257,6 @@ def test_ping_method(session_id):
     lambda_response = lambda_handler(event, context)
 
     # Verify the response
-    assert lambda_response['statusCode'] == HTTPStatus.OK
+    assert lambda_response['statusCode'] == HTTPStatus.OK.value
     assert lambda_response['headers']['Content-Type'] == 'application/json'
     assert lambda_response['headers']['MCP-Session-Id'] == session_id

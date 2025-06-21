@@ -15,6 +15,7 @@ def math(a: int, b: int) -> int:
     """Add two numbers together"""
     if not isinstance(a, int) or not isinstance(b, int):
         raise ValueError('Invalid input: a and b must be integers')
+
     result = add_two_numbers(a, b)
     metrics.add_metric(name='ValidMcpEvents', unit=MetricUnit.Count, value=1)
     return result

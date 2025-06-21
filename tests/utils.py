@@ -167,4 +167,4 @@ def terminate_mcp_session(lambda_handler_func, session_id, context=None):
     response = lambda_handler_func(event, context)
 
     # Verify the response indicates successful deletion
-    return response['statusCode'] == HTTPStatus.NO_CONTENT
+    assert response['statusCode'] == HTTPStatus.NO_CONTENT.value
