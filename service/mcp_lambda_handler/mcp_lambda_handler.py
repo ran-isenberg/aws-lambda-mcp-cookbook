@@ -79,6 +79,15 @@ class MCPLambdaHandler:
         self.session_id: Optional[str] = None
         self.request_id: Optional[str] = None
 
+    def get_session_id(self) -> Optional[str]:
+        """Get the current session ID.
+
+        Returns:
+            Session ID string or None if no session exists
+
+        """
+        return self.session_id
+
     def get_session(self) -> Optional[SessionData]:
         """Get the current session data wrapper.
 
@@ -104,26 +113,6 @@ class MCPLambdaHandler:
         if not self.session_id:
             return False
         return self.session_store.update_session(self.session_id, data)
-
-    def update_session(self, updater_func: Callable[[SessionData], None]) -> bool:
-        """Update session data using a function.
-
-        Args:
-            updater_func: Function that takes SessionData and updates it in place
-
-        Returns:
-            True if successful, False if no session exists
-
-        """
-        session = self.get_session()
-        if not session:
-            return False
-
-        # Update the session data
-        updater_func(session)
-
-        # Save back to storage
-        return self.set_session(session.raw())
 
     def tool(self):  # noqa: C901
         """Create a decorator for a function as an MCP tool.

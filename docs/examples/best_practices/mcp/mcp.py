@@ -15,7 +15,16 @@ def math(a: int, b: int) -> int:
     """Add two numbers together"""
     if not isinstance(a, int) or not isinstance(b, int):
         raise ValueError('Invalid input: a and b must be integers')
+
+    # Uncomment the following line if you want to use session data
+    # session_data: Optional[SessionData] = mcp.get_session()
+
+    # call logic layer
     result = add_two_numbers(a, b)
+
+    # save session data
+    mcp.set_session(data={'result': result})
+
     metrics.add_metric(name='ValidMcpEvents', unit=MetricUnit.Count, value=1)
     return result
 

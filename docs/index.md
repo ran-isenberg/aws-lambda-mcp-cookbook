@@ -35,7 +35,7 @@ NO Lambda adapter, no FastMCP - just pure Lambda as it was meant to be.
 
 This project is a blueprint for new Serverless MCP servers.
 
-It's based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler) combined with the [AWS Lambda Handler cookbook](https://ran-isenberg.github.io/aws-lambda-handler-cookbook/) template.
+It's started based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler) - but had major refactors since, combined with the [AWS Lambda Handler cookbook](https://ran-isenberg.github.io/aws-lambda-handler-cookbook/) template.
 
 #### **Monitoring Design**
 
@@ -54,7 +54,7 @@ It's based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/
 * The AWS Lambda handler embodies Serverless best practices and has all the bells and whistles for a proper production ready handler.
 * AWS Lambda handler uses [AWS Lambda Powertools](https://docs.powertools.aws.dev/lambda-python/).
 * AWS Lambda handler 3 layer architecture: handler layer, logic layer and data access layer
-* Session context storage in DynamoDB (does NOT send it to tools yet)
+* Session context storage in DynamoDB - global getter and setter (get_session, set_session) - be advised, has security issue - need to match session id to user
 * API protected by WAF with four AWS managed rules in production deployment
 * CloudWatch dashboards - High level and low level including CloudWatch alarms
 
@@ -93,7 +93,7 @@ While the code examples are written in Python, the principles are valid to any s
 
 ## Handler Examples
 
-```python hl_lines="7 12 34" title="service/handlers/mcp.py"
+```python hl_lines="8 13 38" title="service/handlers/mcp.py"
 --8<-- "docs/examples/best_practices/mcp/mcp.py"
 ```
 

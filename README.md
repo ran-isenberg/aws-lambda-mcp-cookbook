@@ -18,7 +18,7 @@ NO Lambda adapter, no FastMCP - just pure Lambda as it was meant to be.
 
 This project is a blueprint for new Serverless MCP servers.
 
-It's based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler) combined with the [AWS Lambda Handler cookbook]((https://ran-isenberg.github.io/aws-lambda-mcp-cookbook/)) template.
+It's based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler) - but had major refactors since, combined with the [AWS Lambda Handler cookbook]((https://ran-isenberg.github.io/aws-lambda-mcp-cookbook/)) template.
 
 **[📜Documentation](https://ran-isenberg.github.io/aws-lambda-mcp-cookbook/)** | **[Blogs website](https://www.ranthebuilder.cloud)**
 > **Contact details | mailto:ran.isenberg@ranthebuilder.cloud**
@@ -74,6 +74,7 @@ from service.handlers.utils.authentication import authenticate
 from service.handlers.utils.mcp import mcp
 from service.handlers.utils.observability import logger, metrics, tracer
 from service.logic.math import add_two_numbers
+from service.mcp_lambda_handler.session_data import SessionData
 
 
 @mcp.tool()
@@ -81,7 +82,16 @@ def math(a: int, b: int) -> int:
     """Add two numbers together"""
     if not isinstance(a, int) or not isinstance(b, int):
         raise ValueError('Invalid input: a and b must be integers')
+
+    # Uncomment the following line if you want to use session data
+    # session_data: Optional[SessionData] = mcp.get_session()
+
+    # call logic layer
     result = add_two_numbers(a, b)
+
+    # save session data
+    mcp.set_session(data={'result': result})
+
     metrics.add_metric(name='ValidMcpEvents', unit=MetricUnit.Count, value=1)
     return result
 
@@ -121,7 +131,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
 * The AWS Lambda handler embodies Serverless best practices and has all the bells and whistles for a proper production ready handler.
 * AWS Lambda handler uses [AWS Lambda Powertools](https://docs.powertools.aws.dev/lambda-python/).
 * AWS Lambda handler 3 layer architecture: handler layer, logic layer and data access layer
-* Session context storage in DynamoDB (does NOT send it to tools yet)
+* Session context storage in DynamoDB - global getter and setter (get_session, set_session) - be advised, has security issue - need to match session id to user
 * API protected by WAF with four AWS managed rules in production deployment
 * CloudWatch dashboards - High level and low level including CloudWatch alarms
 
