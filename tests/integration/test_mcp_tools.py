@@ -58,7 +58,8 @@ def test_math_tool_add_error(session_id):
 
     # Validate the error response
     lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
-    assert lambda_response_body.error.message == 'Error executing tool: math error'
+    assert lambda_response_body.error.message == 'Error executing tool'
+    assert lambda_response_body.error.code == -32603, 'Expected internal error code -32603'
 
 
 def test_math_tool_invalid_input(session_id):
@@ -72,10 +73,11 @@ def test_math_tool_invalid_input(session_id):
     lambda_response = lambda_handler(event, context)
 
     # Verify the response
-    assert lambda_response['statusCode'] == HTTPStatus.INTERNAL_SERVER_ERROR
+    assert lambda_response['statusCode'] == HTTPStatus.BAD_REQUEST
     assert lambda_response['headers']['Content-Type'] == 'application/json'
     assert lambda_response['headers']['MCP-Session-Id'] == session_id
 
     # Validate the error response
     lambda_response_body = JSONRPCResponse.model_validate_json(lambda_response['body'])
-    assert lambda_response_body.error.message == 'Error executing tool: Invalid input: a and b must be integers'
+    assert lambda_response_body.error.message == "Invalid value for parameter 'a': invalid literal for int() with base 10: 'foo'"
+    assert lambda_response_body.error.code == -32602, 'Expected error code -32602'

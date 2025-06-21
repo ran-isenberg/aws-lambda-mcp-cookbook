@@ -15,7 +15,6 @@
 import functools
 import http
 import inspect
-from contextvars import ContextVar
 from enum import Enum
 from typing import (
     Any,
@@ -23,6 +22,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Union,
     get_args,
     get_origin,
     get_type_hints,
@@ -43,7 +43,6 @@ from service.mcp_lambda_handler.constants import (
     MCP_VERSION,
 )
 from service.mcp_lambda_handler.models import (
-    MCPAPIGatewayProxyEventBase,
     MCPDeleteAPIGatewayProxyEvent,
     MCPMethod,
     MCPPostAPIGatewayProxyEvent,
@@ -52,16 +51,12 @@ from service.mcp_lambda_handler.session import SessionStore
 from service.mcp_lambda_handler.session_data import SessionData
 from service.mcp_lambda_handler.types import (
     Capabilities,
-    ErrorContent,
     InitializeResult,
     JSONRPCError,
     JSONRPCResponse,
     ServerInfo,
     TextContent,
 )
-
-# Context variable to store current session ID
-current_session_id: ContextVar[Optional[str]] = ContextVar('current_session_id', default=None)
 
 
 class MCPLambdaHandler:
@@ -81,6 +76,8 @@ class MCPLambdaHandler:
         self.tools: Dict[str, Dict] = {}
         self.tool_implementations: Dict[str, Callable] = {}
         self.session_store = session_store
+        self.session_id: Optional[str] = None
+        self.request_id: Optional[str] = None
 
     def get_session(self) -> Optional[SessionData]:
         """Get the current session data wrapper.
@@ -89,10 +86,9 @@ class MCPLambdaHandler:
             SessionData object or None if no session exists
 
         """
-        session_id = current_session_id.get()
-        if not session_id:
+        if not self.session_id:
             return None
-        data = self.session_store.get_session(session_id)
+        data = self.session_store.get_session(self.session_id)
         return SessionData(data) if data is not None else None
 
     def set_session(self, data: Dict[str, Any]) -> bool:
@@ -105,10 +101,9 @@ class MCPLambdaHandler:
             True if successful, False if no session exists
 
         """
-        session_id = current_session_id.get()
-        if not session_id:
+        if not self.session_id:
             return False
-        return self.session_store.update_session(session_id, data)
+        return self.session_store.update_session(self.session_id, data)
 
     def update_session(self, updater_func: Callable[[SessionData], None]) -> bool:
         """Update session data using a function.
@@ -288,22 +283,20 @@ class MCPLambdaHandler:
 
     def handle_request(self, event: Dict, context: Any) -> Dict:
         """Handle an incoming Lambda request."""
-        request_id = None
-        session_id = None
-        current_session_id.set(None)
+        self.request_id = None
+        self.session_id = None
 
         # Get the HTTP method to determine which model to use
         http_method = event.get('httpMethod')
-        logger.debug('HTTP method', extra={'http_method': http_method})
+        logger.info('HTTP method', extra={'http_method': http_method})
 
         try:
             # Use the appropriate model based on HTTP method
             if http_method == 'DELETE':
                 parsed_event = parse(event=event, model=MCPDeleteAPIGatewayProxyEvent)
-                request_id = None  # DELETE requests don't have a request_id
             elif http_method == 'POST':
                 parsed_event = parse(event=event, model=MCPPostAPIGatewayProxyEvent)
-                request_id = parsed_event.body.id if hasattr(parsed_event, 'body') else None
+                self.request_id = parsed_event.body.id if hasattr(parsed_event, 'body') else None
             else:
                 return self._create_error_response(ERROR_INVALID_REQUEST, f'Unsupported HTTP method: {http_method}')
         except Exception:
@@ -311,18 +304,17 @@ class MCPLambdaHandler:
             return self._create_error_response(code=ERROR_INVALID_REQUEST, message='Parse error')
 
         # Set current session ID in context
-        session_id = parsed_event.mcp_session_id
-        if session_id:
-            current_session_id.set(session_id)
-            logger.debug('session_id found', extra={'session_id': session_id})
+        self.session_id = parsed_event.mcp_session_id
+        if self.session_id:
+            logger.debug('session_id found', extra={'session_id': self.session_id})
 
         # Switch-like structure for HTTP method handling
         try:
             match parsed_event.httpMethod:
                 case 'DELETE':
-                    return self._handle_http_delete(parsed_event, request_id, session_id)
+                    return self._handle_http_delete(parsed_event)
                 case 'POST':
-                    return self._handle_http_post(parsed_event, request_id, session_id)
+                    return self._handle_http_post(parsed_event)
                 case _:  # Default case for unsupported methods
                     return self._create_error_response(ERROR_INVALID_REQUEST, f'Unsupported HTTP method: {parsed_event.httpMethod}')
         except Exception:
@@ -330,86 +322,83 @@ class MCPLambdaHandler:
             return self._create_error_response(
                 code=ERROR_INTERNAL,
                 message='Internal server error',
-                request_id=request_id,
-                session_id=session_id,
+                request_id=self.request_id,
+                session_id=self.session_id,
             )
 
-    def _handle_initialize(self, parsed_event: MCPAPIGatewayProxyEventBase, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+    def _handle_initialize(self, parsed_event: MCPPostAPIGatewayProxyEvent) -> Dict:
         """Handle an 'initialize' MCP method request."""
         logger.info('Handling initialize request')
         # Create new session
-        session_id = self.session_store.create_session()
-        current_session_id.set(session_id)
-        logger.debug('session_id created', extra={'session_id': session_id})
+        self.session_id = self.session_store.create_session()
+        logger.debug('session_id created', extra={'session_id': self.session_id})
         result = InitializeResult(
             protocolVersion=MCP_PROTOCOL_VERSION,
             serverInfo=ServerInfo(name=self.name, version=self.version),
             capabilities=Capabilities(tools={'list': True, 'call': True}),
         )
-        return self._create_success_response(result.model_dump(), request_id, session_id)
+        return self._create_success_response(result.model_dump(), self.request_id, self.session_id)
 
-    def _handle_tools_list(self, parsed_event: MCPAPIGatewayProxyEventBase, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+    def _handle_tools_list(self, parsed_event: MCPPostAPIGatewayProxyEvent) -> Dict:
         """Handle a 'tools/list' MCP method request."""
         logger.info('Handling tools/list request')
-        return self._create_success_response({'tools': list(self.tools.values())}, request_id, session_id)
+        return self._create_success_response({'tools': list(self.tools.values())}, self.request_id, self.session_id)
 
-    def _handle_tools_call(self, parsed_event: MCPAPIGatewayProxyEventBase, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+    def _handle_tools_call(self, parsed_event: MCPPostAPIGatewayProxyEvent) -> Dict:
         """Handle a 'tools/call' MCP method request."""
+        logger.info('Handling tools/call request')
         if not parsed_event.body.params:
-            return self._create_error_response(ERROR_INVALID_PARAMS, 'Missing parameters for tools/call', request_id, session_id=session_id)
+            return self._create_error_response(
+                code=ERROR_INVALID_PARAMS, message='Missing parameters for tools/call', request_id=self.request_id, session_id=self.session_id
+            )
 
-        if not self._validate_session(request_id, session_id):
-            return self._create_error_response(ERROR_SERVER, 'Invalid or expired session', request_id, status_code=http.HTTPStatus.NOT_FOUND.value)
+        if not self._validate_session():
+            return self._create_error_response(
+                code=ERROR_SERVER, message='Invalid or expired session', request_id=self.request_id, status_code=http.HTTPStatus.NOT_FOUND.value
+            )
 
         tool_name = parsed_event.body.params.get('name')
         tool_args = parsed_event.body.params.get('arguments', {})
 
         if tool_name not in self.tools:
-            return self._create_error_response(ERROR_METHOD_NOT_FOUND, f"Tool '{tool_name}' not found", request_id, session_id=session_id)
+            return self._create_error_response(
+                code=ERROR_METHOD_NOT_FOUND, message=f"Tool '{tool_name}' not found", request_id=self.request_id, session_id=self.session_id
+            )
+        logger.info('tool_name found', extra={'tool_name': tool_name})
 
         try:
-            # Convert enum string values to enum objects
-            converted_args = {}
-            tool_func = self.tool_implementations[tool_name]
-            hints = get_type_hints(tool_func)
+            converted_args, error_response = self._validate_tool_args(tool_name, tool_args, self.tool_implementations[tool_name])
+            if error_response:
+                return error_response
 
-            for arg_name, arg_value in tool_args.items():
-                arg_type = hints.get(arg_name)
-                if isinstance(arg_type, type) and issubclass(arg_type, Enum):
-                    converted_args[arg_name] = arg_type(arg_value)
-                else:
-                    converted_args[arg_name] = arg_value
-
-            result = tool_func(**converted_args)
+            result = self.tool_implementations[tool_name](**converted_args)
             content = [TextContent(text=str(result)).model_dump()]
-            return self._create_success_response({'content': content}, request_id, session_id)
+            return self._create_success_response(result={'content': content}, request_id=self.request_id, session_id=self.session_id)
         except Exception as e:
             logger.exception(f'Error executing tool {tool_name}: {e}')
-            error_content = [ErrorContent(text=str(e)).model_dump()]
             return self._create_error_response(
-                ERROR_INTERNAL,
-                f'Error executing tool: {str(e)}',
-                request_id,
-                error_content,
-                session_id,
+                code=ERROR_INTERNAL,
+                message='Error executing tool',
+                request_id=self.request_id,
+                session_id=self.session_id,
             )
 
-    def _handle_ping(self, parsed_event: MCPAPIGatewayProxyEventBase, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+    def _handle_ping(self, parsed_event: MCPPostAPIGatewayProxyEvent) -> Dict:
         """Handle a 'ping' MCP method request."""
         logger.info('Handling ping request')
-        return self._create_success_response({}, request_id, session_id)
+        return self._create_success_response({}, self.request_id, self.session_id)
 
-    def _handle_http_delete(self, parsed_event: MCPDeleteAPIGatewayProxyEvent, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+    def _handle_http_delete(self, parsed_event: MCPDeleteAPIGatewayProxyEvent) -> Dict:
         """Handle HTTP DELETE requests, used for session deletion."""
-        if session_id:
-            logger.debug('deleting session', extra={'session_id': session_id})
-            self.session_store.delete_session(session_id)
+        if self.session_id:
+            logger.debug('deleting session', extra={'session_id': self.session_id})
+            self.session_store.delete_session(self.session_id)
             return {'statusCode': http.HTTPStatus.NO_CONTENT.value}
         else:
-            logger.debug('session not found, cant delete session', extra={'session_id': session_id})
+            logger.debug('session not found, cant delete session', extra={'session_id': self.session_id})
             return {'statusCode': http.HTTPStatus.NOT_FOUND.value}
 
-    def _handle_http_post(self, parsed_event: MCPPostAPIGatewayProxyEvent, request_id: Optional[str], session_id: Optional[str]) -> Dict:
+    def _handle_http_post(self, parsed_event: MCPPostAPIGatewayProxyEvent) -> Dict:
         """Handle HTTP POST requests containing JSON-RPC calls."""
         # Map of method handlers
         method_handlers = {
@@ -430,25 +419,265 @@ class MCPLambdaHandler:
                 'body': '',
                 'headers': {'Content-Type': CONTENT_TYPE_JSON, 'MCP-Version': MCP_VERSION},
             }
-        if not session_id:
-            logger.debug('No session ID provided', extra={'session_id': session_id})
+        if not self.session_id:
+            logger.debug('No session ID provided')
             # If no session ID is provided, we assume this is an initialize request
             if parsed_event.body.method != MCPMethod.INITIALIZE:
                 return self._create_error_response(
-                    ERROR_INVALID_REQUEST, 'Session required', request_id, status_code=http.HTTPStatus.BAD_REQUEST.value
+                    ERROR_INVALID_REQUEST, 'Session required', self.request_id, status_code=http.HTTPStatus.BAD_REQUEST.value
                 )
 
         # Use method handlers dictionary to dispatch to the appropriate handler
         if parsed_event.body.method in method_handlers:
-            return method_handlers[parsed_event.body.method](parsed_event, request_id, session_id)
+            return method_handlers[parsed_event.body.method](parsed_event)
 
         # Handle unknown methods
-        return self._create_error_response(ERROR_METHOD_NOT_FOUND, f'Method not found: {parsed_event.body.method}', request_id, session_id=session_id)
+        return self._create_error_response(
+            code=ERROR_METHOD_NOT_FOUND,
+            message=f'Method not found: {parsed_event.body.method}',
+            request_id=self.request_id,
+            session_id=self.session_id,
+        )
 
-    def _validate_session(self, request_id: str, session_id: str) -> bool:
+    def _validate_session(self) -> bool:
         """Validate the session ID."""
-        logger.debug('Validating session', extra={'session_id': session_id})
-        session_data = self.session_store.get_session(session_id)
+        logger.debug('Validating session', extra={'session_id': self.session_id})
+        session_data = self.session_store.get_session(self.session_id)
         if session_data is None:
             return False
         return True
+
+    def _validate_tool_args(self, tool_name: str, tool_args: Dict, tool_func: Callable) -> tuple[Dict, Optional[Dict]]:
+        """Validate tool arguments against the function signature and type hints.
+
+        Args:
+            tool_name: Name of the tool being called
+            tool_args: Arguments provided for the tool
+            tool_func: The function implementation of the tool
+
+        Returns:
+            Tuple of (converted_args, error_response)
+            If validation passes, error_response will be None
+            If validation fails, error_response will contain the error response to return
+        """
+        hints = get_type_hints(tool_func)
+        signature = inspect.signature(tool_func)
+
+        # Check for missing required parameters and unexpected parameters
+        error_response = self._check_parameter_presence(tool_name, tool_args, signature)
+        if error_response:
+            return {}, error_response
+
+        # Convert and validate the arguments
+        return self._convert_and_validate_args(tool_name, tool_args, hints)
+
+    def _check_parameter_presence(self, tool_name: str, tool_args: Dict, signature: inspect.Signature) -> Optional[Dict]:
+        """Check if all required parameters are present and handle unexpected parameters."""
+        expected_params = set(signature.parameters.keys())
+        provided_params = set(tool_args.keys())
+
+        # Check for missing required parameters
+        missing_required = [
+            param
+            for param, param_obj in signature.parameters.items()
+            if param_obj.default == inspect.Parameter.empty and param not in provided_params
+        ]
+
+        if missing_required:
+            logger.error(f'Missing required parameters for tool {tool_name}: {missing_required}')
+            return self._create_error_response(
+                code=ERROR_INVALID_PARAMS,
+                message=f'Missing required parameters: {", ".join(missing_required)}',
+                request_id=self.request_id,
+                session_id=self.session_id,
+            )
+
+        # Check for unexpected parameters
+        unexpected_params = provided_params - expected_params
+        if unexpected_params:
+            logger.warning(f'Unexpected parameters for tool {tool_name}: {unexpected_params}')
+            # We'll log a warning but continue, removing the unexpected parameters
+            for param in unexpected_params:
+                tool_args.pop(param)
+
+        return None
+
+    def _convert_and_validate_args(self, tool_name: str, tool_args: Dict, hints: Dict[str, Any]) -> tuple[Dict, Optional[Dict]]:
+        """Convert and validate arguments based on type hints."""
+        converted_args = {}
+
+        for arg_name, arg_value in tool_args.items():
+            if arg_name not in hints:
+                # No type hint - use the value as-is
+                converted_args[arg_name] = arg_value
+                continue
+
+            arg_type = hints[arg_name]
+
+            # Skip conversion if value is None
+            if arg_value is None:
+                converted_args[arg_name] = None
+                continue
+
+            try:
+                # Handle different types through helper methods
+                conversion_result = self._convert_arg_value(arg_name, arg_value, arg_type)
+                if isinstance(conversion_result, tuple):
+                    # If a tuple is returned, it's an error
+                    error_msg, expected_type = conversion_result
+                    return {}, self._create_error_response(
+                        code=ERROR_INVALID_PARAMS,
+                        message=f"Invalid value for parameter '{arg_name}': {error_msg}",
+                        request_id=self.request_id,
+                        session_id=self.session_id,
+                        data={'expected': expected_type, 'received': type(arg_value).__name__},
+                    )
+
+                converted_args[arg_name] = conversion_result
+
+            except Exception as e:
+                error_msg = str(e)
+                logger.error(f"Type conversion error for parameter '{arg_name}': {error_msg}")
+
+                # Get a friendly type name for the error message
+                expected_type_name = self._get_friendly_type_name(arg_type)
+
+                return {}, self._create_error_response(
+                    code=ERROR_INVALID_PARAMS,
+                    message=f"Invalid value for parameter '{arg_name}': {error_msg}",
+                    request_id=self.request_id,
+                    session_id=self.session_id,
+                    data={'expected': expected_type_name, 'received': type(arg_value).__name__},
+                )
+
+        return converted_args, None
+
+    def _convert_arg_value(self, arg_name: str, arg_value: Any, arg_type: Any) -> Any:
+        """Convert an argument value to the expected type."""
+        # Handle enum types
+        if isinstance(arg_type, type) and issubclass(arg_type, Enum):
+            return self._convert_enum_value(arg_value, arg_type)
+
+        # Handle primitive types
+        if arg_type in (str, int, float, bool) and not isinstance(arg_value, arg_type):
+            return self._convert_primitive_value(arg_value, arg_type)
+
+        # Handle Optional types (Union[Type, None])
+        if get_origin(arg_type) is Union:
+            return self._convert_union_value(arg_value, arg_type)
+
+        # Handle List types
+        if get_origin(arg_type) in (list, List):
+            return self._convert_list_value(arg_value, arg_type)
+
+        # Handle Dict types
+        if get_origin(arg_type) in (dict, Dict):
+            if not isinstance(arg_value, dict):
+                return (f'Expected dict, got {type(arg_value).__name__}', 'dictionary')
+            return arg_value
+
+        # Default case - use the value as-is
+        return arg_value
+
+    def _convert_enum_value(self, arg_value: Any, enum_type: type) -> Any:
+        """Convert a value to an enum type."""
+        try:
+            return enum_type(arg_value)
+        except ValueError:
+            # Check if the enum value matches a case-insensitive name
+            enum_dict = {str(e.name).lower(): e for e in enum_type}
+            if isinstance(arg_value, str) and arg_value.lower() in enum_dict:
+                return enum_dict[arg_value.lower()]
+
+            # If conversion fails, return an error tuple
+            return (
+                f'Invalid enum value: {arg_value}. Expected one of: {[e.value for e in enum_type]}',
+                f'enum [{", ".join(str(e.value) for e in enum_type)}]',
+            )
+
+    def _convert_primitive_value(self, arg_value: Any, primitive_type: type) -> Any:
+        """Convert a value to a primitive type."""
+        # Special handling for booleans - accept string representations
+        if primitive_type is bool and isinstance(arg_value, str):
+            lower_val = arg_value.lower()
+            if lower_val in ('true', 'yes', '1', 'on'):
+                return True
+            elif lower_val in ('false', 'no', '0', 'off'):
+                return False
+            else:
+                return (f"Cannot convert '{arg_value}' to boolean", 'boolean')
+
+        # For other primitives, try direct conversion
+        try:
+            return primitive_type(arg_value)
+        except (ValueError, TypeError) as e:
+            return (str(e), primitive_type.__name__)
+
+    def _convert_union_value(self, arg_value: Any, union_type: Any) -> Any:
+        """Convert a value to a union type."""
+        type_args = get_args(union_type)
+
+        # Check if this is Optional[X]
+        if type(None) in type_args and len(type_args) == 2:
+            # Get the non-None type
+            actual_type = next(t for t in type_args if t is not type(None))
+
+            # Handle primitive types in Optional
+            if actual_type in (str, int, float, bool):
+                return self._convert_primitive_value(arg_value, actual_type)
+
+            # Handle Optional[Enum]
+            if isinstance(actual_type, type) and issubclass(actual_type, Enum):
+                return self._convert_enum_value(arg_value, actual_type)
+
+        # For other union types, we'll just pass through the value
+        return arg_value
+
+    def _convert_list_value(self, arg_value: Any, list_type: Any) -> Any:
+        """Convert a value to a list type."""
+        if not isinstance(arg_value, list):
+            # Try to convert single value to list
+            return [arg_value]
+
+        # Already a list, use as-is
+        return arg_value
+
+    def _get_friendly_type_name(self, type_hint: Any) -> str:
+        """Get a user-friendly name for a type hint."""
+        # Handle simple types
+        if type_hint in (str, int, float, bool):
+            return type_hint.__name__
+
+        # Handle Enums
+        if isinstance(type_hint, type) and issubclass(type_hint, Enum):
+            return f'enum [{", ".join(str(e.value) for e in type_hint)}]'
+
+        # Handle Union/Optional types
+        origin = get_origin(type_hint)
+        if origin is Union:
+            args = get_args(type_hint)
+            # Check if this is Optional[X]
+            if type(None) in args and len(args) == 2:
+                # Get the non-None type
+                actual_type = next(t for t in args if t is not type(None))
+                return f'optional {self._get_friendly_type_name(actual_type)}'
+            else:
+                # Regular Union
+                return f'one of [{", ".join(self._get_friendly_type_name(t) for t in args)}]'
+
+        # Handle List types
+        if origin in (list, List):
+            args = get_args(type_hint)
+            if args:
+                return f'list of {self._get_friendly_type_name(args[0])}'
+            return 'list'
+
+        # Handle Dict types
+        if origin in (dict, Dict):
+            args = get_args(type_hint)
+            if len(args) >= 2:
+                return f'dictionary with {self._get_friendly_type_name(args[0])} keys and {self._get_friendly_type_name(args[1])} values'
+            return 'dictionary'
+
+        # Default case
+        return str(type_hint)

@@ -8,7 +8,7 @@ from constructs import Construct
 
 import cdk.service.constants as constants
 from cdk.service.api_db_construct import ApiDbConstruct
-from cdk.service.monitoring import CrudMonitoring
+from cdk.service.monitoring import Monitoring
 from cdk.service.waf_construct import WafToApiGatewayConstruct
 
 
@@ -22,7 +22,7 @@ class ApiConstruct(Construct):
         self.rest_api = self._build_api_gw()
         api_resource: aws_apigateway.Resource = self.rest_api.root.add_resource(constants.GW_RESOURCE)
         self.create_order_func = self._add_post_lambda_integration(api_resource, self.lambda_role, self.api_db.db)
-        self.monitoring = CrudMonitoring(self, id_, self.rest_api, self.api_db.db, [self.create_order_func])
+        self.monitoring = Monitoring(self, id_, self.rest_api, self.api_db.db, [self.create_order_func])
         if is_production_env:
             self.waf = WafToApiGatewayConstruct(self, f'{id_}waf', self.rest_api)
 
@@ -94,9 +94,9 @@ class ApiConstruct(Construct):
             role=role,
             log_retention=RetentionDays.ONE_DAY,
             logging_format=_lambda.LoggingFormat.JSON,
-            system_log_level_v2=_lambda.SystemLogLevel.INFO,
+            system_log_level_v2=_lambda.SystemLogLevel.WARN,
         )
 
-        # POST /api/orders/
-        api_resource.add_method(http_method='POST', integration=aws_apigateway.LambdaIntegration(handler=lambda_function))
+        # /mcp
+        api_resource.add_method(http_method='ANY', integration=aws_apigateway.LambdaIntegration(handler=lambda_function))
         return lambda_function

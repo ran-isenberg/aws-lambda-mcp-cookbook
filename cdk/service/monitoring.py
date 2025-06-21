@@ -18,7 +18,7 @@ from constructs import Construct
 from cdk.service import constants
 
 
-class CrudMonitoring(Construct):
+class Monitoring(Construct):
     def __init__(
         self,
         scope: Construct,

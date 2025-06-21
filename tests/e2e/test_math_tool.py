@@ -33,3 +33,4 @@ async def test_e2e_math_tool(api_gateway_url):
             assert tool_result.content is not None
             assert len(tool_result.content) == 1
             assert tool_result.content[0].text == str(expected_sum), f'Expected {expected_sum}, got {tool_result.content[0].text}'
+            await session.send_ping()

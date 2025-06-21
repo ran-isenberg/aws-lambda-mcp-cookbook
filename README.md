@@ -112,6 +112,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
 
 * PURE Lambda - not web adapter, no FastMCP required!
 * Python Serverless MCP server with a recommended file structure.
+* MCP Tools input validation: check argument types and values
 * Tests - unit, integration (tests for full MCP messages) and E2E with a real MCP client
 * CDK infrastructure with infrastructure tests and security tests.
 * CI/CD pipelines based on Github actions that deploys to AWS with python linters, complexity checks and style formatters.
