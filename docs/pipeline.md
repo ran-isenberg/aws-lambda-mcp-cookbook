@@ -32,6 +32,7 @@ All steps can be run locally using the makefile. See details below:
 - E2E tests  - run `make e2e` in the IDE
 - Code coverage tests  - run `make coverage-tests` in the IDE after CDK dep
 - Update GitHub documentation branch
+- Update dependencies and CDK version automatically to the latest versions: run `make update-deps`.
 
 ### **Other Capabilities**
 
