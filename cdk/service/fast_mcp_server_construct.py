@@ -35,7 +35,7 @@ class FastMCPServerConstruct(Construct):
             table_name=table_id,
             partition_key=dynamodb.Attribute(name='session_id', type=dynamodb.AttributeType.STRING),
             billing=dynamodb.Billing.on_demand(),
-            point_in_time_recovery=True,
+            point_in_time_recovery_specification=dynamodb.PointInTimeRecoverySpecification(enabled=True),
             removal_policy=RemovalPolicy.DESTROY,
         )
         CfnOutput(self, id=constants.FAST_MCP_TABLE_NAME_OUTPUT, value=table.table_name).override_logical_id(constants.FAST_MCP_TABLE_NAME_OUTPUT)
