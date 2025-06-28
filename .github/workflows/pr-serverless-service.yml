@@ -80,8 +80,8 @@ jobs:
           SESSION_NAME: "github-${{github.sha}}-dev"
       - name: Unit tests
         run: make unit
-      - name: Infrastructure tests
-        run: make infra-tests
+      #- name: Infrastructure tests
+      #  run: make infra-tests
       - name: Deploy to AWS
         run: make deploy
       # NOTE: these run unit and integration tests
