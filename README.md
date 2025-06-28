@@ -10,11 +10,15 @@
 
 <img src="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/docs/media/banner.png?raw=true" width="400" alt="banner" />
 
-This project provides a working, open source based, pure AWS Lambda based Python MCP server implementation.
+This project provides a working, open source based, AWS Lambda based Python MCP server implementation.
+
+It provides two options:
+1. Pure, native Lambda function with no FastMCP.
+2. Lambda with AWS web adapter and FastMCP
 
 It contains a production grade implementation including DEPLOYMENT code with CDK and a CI/CD pipeline, testing, observability and more (see Features section).
 
-NO Lambda adapter, no FastMCP - just pure Lambda as it was meant to be.
+Choose the architecture that you see fit, each with its own pros and cons.
 
 This project is a blueprint for new Serverless MCP servers.
 
@@ -63,6 +67,10 @@ This project aims to reduce cognitive load and answer these questions for you by
 
 The MCP server uses JSON RPC over HTTP (non stream-able) via API Gateway's body payload parameter. See integration tests and see how the test event is generated.
 
+**BE AWARE** - The pure Lambda variation has limited MCP protocol support, it's based used for tools only simple MCP. For full blown services, use the FastMCP variation.
+
+Native/pure Lambda example:
+
 ```python
 from aws_lambda_env_modeler import init_environment_variables
 from aws_lambda_powertools.logging import correlation_paths
@@ -105,6 +113,29 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
     return mcp.handle_request(event, context)
 ```
 
+Example with FastMCP and AWS web adapter extension:
+
+```python
+from fastmcp import FastMCP
+
+from service.handlers.utils.observability import logger
+from service.logic.math import add_two_numbers
+
+mcp: FastMCP = FastMCP(name='mcp-lambda-server')
+
+
+@mcp.tool
+def math(a: int, b: int) -> int:
+    """Add two numbers together"""
+    print('in math tool')
+    logger.info('using math tool with cool logger', extra={'a': a, 'b': b})
+    return add_two_numbers(a, b)
+
+
+app = mcp.http_app(transport='http', stateless_http=True, json_response=True)
+```
+
+
 ### Serverless MCP Template
 
 
@@ -120,7 +151,7 @@ def lambda_handler(event: dict, context: LambdaContext) -> dict:
 
 ### **Features**
 
-* PURE Lambda - not web adapter, no FastMCP required!
+* PURE Lambda - not web adapter, no FastMCP required or Web adapter with FastMCP.
 * Python Serverless MCP server with a recommended file structure.
 * MCP Tools input validation: check argument types and values
 * Tests - unit, integration (tests for full MCP messages) and E2E with a real MCP client

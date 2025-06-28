@@ -3,6 +3,7 @@ import os
 import pytest
 
 from cdk.service.constants import (
+    FAST_MCP_TABLE_NAME_OUTPUT,
     POWER_TOOLS_LOG_LEVEL,
     POWERTOOLS_SERVICE_NAME,
     SERVICE_NAME,
@@ -18,6 +19,7 @@ def init():
     os.environ[POWER_TOOLS_LOG_LEVEL] = 'DEBUG'
     os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
     os.environ['TABLE_NAME'] = get_stack_output(TABLE_NAME_OUTPUT)
+    os.environ['FAST_MCP_TABLE_NAME'] = get_stack_output(FAST_MCP_TABLE_NAME_OUTPUT)
 
 
 @pytest.fixture(scope='module', autouse=True)

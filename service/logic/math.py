@@ -1,7 +1,7 @@
-from service.handlers.utils.observability import logger, tracer
+from service.handlers.utils.observability import logger
 
 
-@tracer.capture_method
+# @tracer.capture_method
 def add_two_numbers(a: int, b: int) -> int:
     """Add two numbers together."""
     logger.info('Adding two numbers', extra={'a': a, 'b': b})

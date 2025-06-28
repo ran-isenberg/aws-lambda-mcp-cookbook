@@ -1,5 +1,8 @@
+from typing import Union
+
 import aws_cdk.aws_sns as sns
-from aws_cdk import CfnOutput, Duration, RemovalPolicy, aws_apigateway
+from aws_cdk import Duration, RemovalPolicy, aws_apigateway
+from aws_cdk import aws_apigatewayv2 as apigwv2
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_kms as kms
@@ -23,14 +26,14 @@ class Monitoring(Construct):
         self,
         scope: Construct,
         id_: str,
-        crud_api: aws_apigateway.RestApi,
+        mcp_api: Union[aws_apigateway.RestApi, apigwv2.HttpApi],
         db: dynamodb.TableV2,
         functions: list[_lambda.Function],
     ) -> None:
         super().__init__(scope, id_)
         self.id_ = id_
         self.notification_topic = self._build_topic()
-        self._build_high_level_dashboard(crud_api, self.notification_topic)
+        self._build_high_level_dashboard(mcp_api, self.notification_topic)
         self._build_low_level_dashboard(db, functions, self.notification_topic)
 
     def _build_topic(self) -> sns.Topic:
@@ -52,10 +55,13 @@ class Monitoring(Construct):
                 resources=[topic.topic_arn],
             )
         )
-        CfnOutput(self, id=constants.MONITORING_TOPIC, value=topic.topic_name).override_logical_id(constants.MONITORING_TOPIC)
         return topic
 
-    def _build_high_level_dashboard(self, crud_api: aws_apigateway.RestApi, topic: sns.Topic):
+    def _build_high_level_dashboard(
+        self,
+        mcp_api: Union[aws_apigateway.RestApi, apigwv2.HttpApi],
+        topic: sns.Topic,
+    ):
         high_level_facade = MonitoringFacade(
             self,
             f'{self.id_}HighFacade',
@@ -67,7 +73,7 @@ class Monitoring(Construct):
         )
         high_level_facade.add_large_header('MCP Server High Level Dashboard')
         high_level_facade.monitor_api_gateway(
-            api=crud_api,
+            api=mcp_api,  # type: ignore
             add5_xx_fault_rate_alarm={'internal_error': ErrorRateThreshold(max_error_rate=1)},
         )
         metric_factory = high_level_facade.create_metric_factory()

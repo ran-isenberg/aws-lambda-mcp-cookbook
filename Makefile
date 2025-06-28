@@ -46,6 +46,7 @@ unit:
 
 build: deps
 	mkdir -p .build/lambdas ; cp -r service .build/lambdas
+	cp run.sh .build/lambdas/
 	mkdir -p .build/common_layer ; poetry export --without=dev --format=requirements.txt > .build/common_layer/requirements.txt
 
 infra-tests: build

@@ -27,11 +27,15 @@ The MCP server uses JSON RPC over HTTP (non streamable) via API Gateway's body p
 
 ### Serverless MCP Server
 
-This project provides a working, open source based, pure AWS Lambda based Python MCP server implementation.
+This project provides a working, open source based, AWS Lambda based Python MCP server implementation.
+
+It provides two options:
+1. Pure, native Lambda function with no FastMCP.
+2. Lambda with AWS web adapter and FastMCP
 
 It contains a production grade implementation including DEPLOYMENT code with CDK and a CI/CD pipeline, testing, observability and more (see Features section).
 
-NO Lambda adapter, no FastMCP - just pure Lambda as it was meant to be.
+Choose the architecture that you see fit, each with its own pros and cons.
 
 This project is a blueprint for new Serverless MCP servers.
 
@@ -43,7 +47,7 @@ It's started based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/m
 
 ### **Features**
 
-* PURE Lambda - not web adapter, no FastMCP required!
+* PURE Lambda - not web adapter, no FastMCP required or Web adapter with FastMCP.
 * Python Serverless MCP server with a recommended file structure.
 * MCP Tools input validation: check argument types and values
 * CDK infrastructure with infrastructure tests and security tests.
@@ -81,17 +85,28 @@ While the code examples are written in Python, the principles are valid to any s
 
 ## Security
 
+For pure Lambda:
+
 * WAF connected in production accounts (requires having an environment variable during deployment called 'ENVIRONMENT' with a value of 'production')
 * Auth/Authz function placeholder in the mcp.py handler function - see authentication.py
 * It is recommended to either use IAM/Cognito/Lambda authorizer or use the authentication.py and implement identity provider token validation flow.
+
+
+For FastMCP:
+* Use FastMCP Auth parameter for Oauth implementation.
+* If you use session id management, you need to make sure the session id matches the user id by yourself.
+
 
 ### Known Issues
 
 * There might be security issues with this implementation, MCP is very new and has many issues.
 * Session saving - there's no match validation between session id and user id/tenant id. This is a TODO item.
 * It is not possible to manually update session data, only fetch.
+* Pure Lambda variation has limited MCP protocol support, it's based used for tools only simple MCP. For full blown services, use the FastMCP variation.
 
 ## Handler Examples
+
+Pure Lambda:
 
 ```python hl_lines="8 13 38" title="service/handlers/mcp.py"
 --8<-- "docs/examples/best_practices/mcp/mcp.py"
@@ -100,6 +115,18 @@ While the code examples are written in Python, the principles are valid to any s
 Handler is found at service/handlers/mcp.py
 
 MCP engine found at service/mcp_lambda_handler folder
+
+
+FastMCP Lambda:
+
+```python hl_lines="8 13 38" title="service/mcp_server.py"
+--8<-- "docs/examples/best_practices/mcp/mcp_server.py"
+```
+
+Handler is found at service/mcp_server.py
+
+
+
 
 ## **License**
 

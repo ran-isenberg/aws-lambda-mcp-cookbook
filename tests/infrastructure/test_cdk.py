@@ -12,6 +12,7 @@ def test_synthesizes_properly():
     # Prepare the stack for assertions.
     template = Template.from_stack(service_stack)
 
-    # verify that we have one API GW, that is it not deleted by mistake
+    # verify that we have API GWs and DBs, verify not deleted by mistake prior to deployment
     template.resource_count_is('AWS::ApiGateway::RestApi', 1)
-    template.resource_count_is('AWS::DynamoDB::GlobalTable', 1)  # session db
+    template.resource_count_is('AWS::ApiGatewayV2::Api', 1)
+    template.resource_count_is('AWS::DynamoDB::GlobalTable', 2)  # session db

@@ -2,7 +2,7 @@
 requires = ["poetry>=2.0.1"]
 build-backend = "poetry.core.masonry.api"
 [tool.poetry]
-name = "aws_lambda_handler_cookbook"
+name = "aws_mcp_cookbook"
 version = "3.0.0"
 description = "This repository provides a working, deployable, open source based, AWS Lambda MCP server and CDK Python code. This handler embodies Serverless best practices and has all the bells and whistles for a proper production ready handler"
 authors = ["Ran Isenberg"]
@@ -25,6 +25,8 @@ pydantic = {version = "^2.0.3"}
 aws-lambda-powertools =  {extras = ["tracer"],version = "^3.7.0"}
 boto3 = "^1.26.125"
 aws-lambda-env-modeler = "*"
+fastmcp = "*"
+fastapi = "*"
 
 [tool.poetry.group.dev.dependencies]
 # CDK
@@ -58,6 +60,7 @@ toml = "*"
 mkdocs-render-swagger-plugin = "*"
 mcp = "*"
 tenacity = "*"
+jsonschema = "*"
 
 [tool.poetry.requires-plugins]
 poetry-plugin-export = ">=1.9"
