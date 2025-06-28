@@ -82,6 +82,7 @@ class MCPApiConstruct(Construct):
             entry=constants.COMMON_LAYER_BUILD_FOLDER,
             compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
             removal_policy=RemovalPolicy.DESTROY,
+            compatible_architectures=[_lambda.Architecture.X86_64],
         )
 
     def _add_post_lambda_integration(
@@ -110,6 +111,7 @@ class MCPApiConstruct(Construct):
             log_retention=RetentionDays.ONE_DAY,
             logging_format=_lambda.LoggingFormat.JSON,
             system_log_level_v2=_lambda.SystemLogLevel.WARN,
+            architecture=_lambda.Architecture.X86_64,
         )
 
         api_resource.add_method(http_method='ANY', integration=aws_apigateway.LambdaIntegration(handler=lambda_function))
