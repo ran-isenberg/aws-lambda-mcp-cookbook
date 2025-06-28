@@ -21,25 +21,38 @@ Starting a production grade Serverless MCP can be overwhelming. You need to figu
 
 This project aims to reduce cognitive load and answer these questions for you by providing a skeleton Python Serverless service blueprint that implements best practices for AWS Lambda, Serverless CI/CD, and AWS CDK in one blueprint project.
 
-The MCP server uses JSON RPC over HTTP (non streamable) via API Gateway's body payload parameter. See integration tests and see how the test event is generated.
+This project is a blueprint for new Serverless MCP servers.
 
-![design](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/docs/media/design.png?raw=true)
+It provides two implementation options:
 
-### Serverless MCP Server
-
-This project provides a working, open source based, AWS Lambda based Python MCP server implementation.
-
-It provides two options:
 1. Pure, native Lambda function with no FastMCP.
 2. Lambda with AWS web adapter and FastMCP
 
-It contains a production grade implementation including DEPLOYMENT code with CDK and a CI/CD pipeline, testing, observability and more (see Features section).
-
 Choose the architecture that you see fit, each with its own pros and cons.
 
-This project is a blueprint for new Serverless MCP servers.
+![design](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/docs/media/design.png?raw=true)
+
+### Option 1: Serverless Native Lambda MCP Server
+
+This project provides a working, open source based, AWS Lambda based Python MCP server implementation.
+
+The MCP server uses JSON RPC over HTTP (non streamable) via API Gateway's body payload parameter. See integration tests and see how the test event is generated.
+
+It contains an advanced implementation including IaC CDK code and a CI/CD pipeline, testing, observability and more (see Features section).
 
 It's started based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler) - but had major refactors since, combined with the [AWS Lambda Handler cookbook](https://ran-isenberg.github.io/aws-lambda-handler-cookbook/) template.
+
+Better fitted for POCs or tool oriented MCPs. Can be secured with custom authentication code and WAF.
+
+
+### Option 2: Serverless Lambda Web Adapter & FastMCP
+
+Based on [AWS Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter) and [FastMCP](https://github.com/jlowin/fastmcp).
+
+Use an HTTP API GW and Lambda function. Can be used with a REST API GW with a custom domain too.
+
+Better fitted for production-grade MCP servers as it upholds to the official MCP protocol and has native auth mechanism (OAuth).
+
 
 #### **Monitoring Design**
 
@@ -91,11 +104,10 @@ For pure Lambda:
 * Auth/Authz function placeholder in the mcp.py handler function - see authentication.py
 * It is recommended to either use IAM/Cognito/Lambda authorizer or use the authentication.py and implement identity provider token validation flow.
 
-
 For FastMCP:
+
 * Use FastMCP Auth parameter for Oauth implementation.
 * If you use session id management, you need to make sure the session id matches the user id by yourself.
-
 
 ### Known Issues
 
@@ -116,17 +128,13 @@ Handler is found at service/handlers/mcp.py
 
 MCP engine found at service/mcp_lambda_handler folder
 
-
 FastMCP Lambda:
 
-```python hl_lines="8 13 38" title="service/mcp_server.py"
+```python hl_lines="8 11 19 26 33" title="service/mcp_server.py"
 --8<-- "docs/examples/best_practices/mcp/mcp_server.py"
 ```
 
 Handler is found at service/mcp_server.py
-
-
-
 
 ## **License**
 

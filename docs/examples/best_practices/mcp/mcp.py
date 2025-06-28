@@ -7,7 +7,7 @@ from service.handlers.models.env_vars import McpHandlerEnvVars
 from service.handlers.utils.authentication import authenticate
 from service.handlers.utils.mcp import mcp
 from service.handlers.utils.observability import logger, metrics, tracer
-from service.logic.math import add_two_numbers
+from service.logic.tools.math import add_two_numbers
 
 
 @mcp.tool()

@@ -6,7 +6,7 @@ from mcp.client.streamable_http import streamablehttp_client
 
 
 @pytest.mark.asyncio
-async def test_e2e_math_tool(pure_lambda_mcp_url):
+async def test_math_tool(pure_lambda_mcp_url):
     """End-to-end test of the MCP server using the math tool."""
     # Generate two random numbers for testing
     a = random.randint(1, 100)

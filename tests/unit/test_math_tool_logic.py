@@ -1,4 +1,4 @@
-from service.logic.math import add_two_numbers
+from service.logic.tools.math import add_two_numbers
 
 
 def test_add_two_numbers_positive():
