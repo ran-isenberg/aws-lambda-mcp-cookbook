@@ -51,7 +51,7 @@ class MCPApiConstruct(Construct):
             cloud_watch_role=False,
         )
 
-        CfnOutput(self, id=constants.PURE_MCP_API_URL, value=f'{rest_api.url}/mcp').override_logical_id(constants.PURE_MCP_API_URL)
+        CfnOutput(self, id=constants.PURE_MCP_API_URL, value=f'{rest_api.url}mcp').override_logical_id(constants.PURE_MCP_API_URL)
         return rest_api
 
     def _build_lambda_role(self, db: dynamodb.TableV2) -> iam.Role:
