@@ -95,6 +95,8 @@ Better fitted for POCs or tool oriented MCPs. Can be secured with custom authent
 Native/pure Lambda example:
 
 ```python
+import os
+
 from aws_lambda_env_modeler import init_environment_variables
 from aws_lambda_powertools.logging import correlation_paths
 from aws_lambda_powertools.metrics import MetricUnit
@@ -102,11 +104,17 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 
 from service.handlers.models.env_vars import McpHandlerEnvVars
 from service.handlers.utils.authentication import authenticate
-from service.handlers.utils.mcp import mcp
 from service.handlers.utils.observability import logger, metrics, tracer
 from service.logic.math import add_two_numbers
-from service.mcp_lambda_handler.session_data import SessionData
+from service.mcp_parser.session_data import SessionData
 
+
+from service.handlers.models.env_vars import McpHandlerEnvVars
+from service.mcp_parser.parser import MCPLambdaHandler
+from service.mcp_parser.session import DynamoDBSessionStore
+
+session_store = DynamoDBSessionStore(table_name_getter=lambda: os.getenv('TABLE_NAME'))
+mcp = MCPLambdaHandler(name='mcp-lambda-server', version='1.0.0', session_store=session_store)
 
 @mcp.tool()
 def math(a: int, b: int) -> int:

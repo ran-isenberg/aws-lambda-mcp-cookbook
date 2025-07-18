@@ -44,7 +44,6 @@ It's started based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/m
 
 Better fitted for POCs or tool oriented MCPs. Can be secured with custom authentication code and WAF.
 
-
 ### Option 2: Serverless Lambda Web Adapter & FastMCP
 
 Based on [AWS Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter) and [FastMCP](https://github.com/jlowin/fastmcp).
@@ -52,7 +51,6 @@ Based on [AWS Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter) an
 Use an HTTP API GW and Lambda function. Can be used with a REST API GW with a custom domain too.
 
 Better fitted for production-grade MCP servers as it upholds to the official MCP protocol and has native auth mechanism (OAuth).
-
 
 #### **Monitoring Design**
 
