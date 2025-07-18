@@ -12,6 +12,7 @@ from service.logic.tools.math import add_two_numbers
 
 @mcp.tool()
 def math(a: int, b: int) -> int:
+    """Add two numbers together"""
     # Uncomment the following line if you want to use session data
     # session_data: Optional[SessionData] = mcp.get_session()
 

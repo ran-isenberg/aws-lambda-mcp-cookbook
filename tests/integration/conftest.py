@@ -1,4 +1,5 @@
 import os
+from typing import Generator
 
 import pytest
 
@@ -27,8 +28,8 @@ def table_name():
     return os.environ['TABLE_NAME']
 
 
-@pytest.fixture(scope='function')
-def session_id():
+@pytest.fixture(scope='function', autouse=False)
+def session_id() -> Generator[str, None]:
     # Initialize an MCP session
     context = generate_context()
     session_id = initialize_mcp_session(lambda_handler, context)
