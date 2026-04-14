@@ -77,7 +77,7 @@ class FastMCPServerConstruct(Construct):
             self,
             f'{self.id_}{constants.LAMBDA_LAYER_NAME}',
             entry=constants.COMMON_LAYER_BUILD_FOLDER,
-            compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_14],
             removal_policy=RemovalPolicy.DESTROY,
             compatible_architectures=[_lambda.Architecture.X86_64],
         )
@@ -90,7 +90,7 @@ class FastMCPServerConstruct(Construct):
         lambda_function = _lambda.Function(
             self,
             constants.MCP_LAMBDA,
-            runtime=_lambda.Runtime.PYTHON_3_13,
+            runtime=_lambda.Runtime.PYTHON_3_14,
             code=_lambda.Code.from_asset(constants.BUILD_FOLDER),
             architecture=_lambda.Architecture.X86_64,
             handler='run.sh',

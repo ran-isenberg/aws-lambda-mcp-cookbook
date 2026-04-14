@@ -8,18 +8,17 @@ LATEST_OPENAPI := openapi_latest.json
 
 
 dev:
-	pip install --upgrade pip pre-commit poetry
-	pre-commit install
-# ensures poetry creates a local virtualenv (.venv)
-	poetry config --local virtualenvs.in-project true
-	poetry install --no-root
+	@command -v uv >/dev/null 2>&1 || curl -LsSf https://astral.sh/uv/install.sh | sh
+	uv tool install --upgrade pre-commit
+	uv tool run pre-commit install
+	uv sync --all-groups
 	npm ci
 
 format:
-	poetry run ruff check . --fix
+	uv run ruff check . --fix
 
 format-fix:
-	poetry run ruff format .
+	uv run ruff format .
 
 lint: format
 	@echo "Running mypy"
@@ -27,41 +26,41 @@ lint: format
 
 complex:
 	@echo "Running Radon"
-	poetry run radon cc -e 'tests/*,cdk.out/*,node_modules/*' .
+	uv run radon cc -e 'tests/*,cdk.out/*,node_modules/*' .
 	@echo "Running xenon"
-	poetry run xenon --max-absolute B --max-modules A --max-average A -e 'tests/*,.venv/*,cdk.out/*,node_modules/*,service/*' .
+	uv run xenon --max-absolute B --max-modules A --max-average A -e 'tests/*,.venv/*,cdk.out/*,node_modules/*,service/*' .
 
 pre-commit:
-	poetry run pre-commit run -a --show-diff-on-failure
+	uv run pre-commit run -a --show-diff-on-failure
 
 mypy-lint:
-	poetry run mypy --pretty service cdk tests docs/examples
+	uv run mypy --pretty service cdk tests docs/examples
 
 deps:
-	poetry export --only=dev --format=requirements.txt > dev_requirements.txt
-	poetry export --without=dev --format=requirements.txt > lambda_requirements.txt
+	uv export --only-group dev --format requirements-txt --no-hashes > dev_requirements.txt
+	uv export --no-dev --format requirements-txt --no-hashes > lambda_requirements.txt
 
 unit:
-	poetry run pytest tests/unit  --cov-config=.coveragerc --cov=service --cov-report xml
+	uv run pytest tests/unit  --cov-config=.coveragerc --cov=service --cov-report xml
 
 build: deps
 	mkdir -p .build/lambdas ; cp -r service .build/lambdas
 	cp run.sh .build/lambdas/
-	mkdir -p .build/common_layer ; poetry export --without=dev --format=requirements.txt > .build/common_layer/requirements.txt
+	mkdir -p .build/common_layer ; uv export --no-dev --format requirements-txt --no-hashes > .build/common_layer/requirements.txt
 
 infra-tests: build
-	poetry run pytest tests/infrastructure
+	uv run pytest tests/infrastructure
 
 integration:
-	poetry run pytest tests/integration  --cov-config=.coveragerc --cov=service --cov-report xml
+	uv run pytest tests/integration  --cov-config=.coveragerc --cov=service --cov-report xml
 
 e2e:
-	poetry run pytest tests/e2e  --cov-config=.coveragerc --cov=service --cov-report xml
+	uv run pytest tests/e2e  --cov-config=.coveragerc --cov=service --cov-report xml
 
 pr: deps format pre-commit complex lint lint-docs unit deploy coverage-tests e2e
 
 coverage-tests:
-	poetry run pytest tests/unit tests/integration  --cov-config=.coveragerc --cov=service --cov-report xml
+	uv run pytest tests/unit tests/integration  --cov-config=.coveragerc --cov=service --cov-report xml
 
 deploy: build
 	npx cdk deploy --app="${PYTHON} ${PWD}/app.py" --require-approval=never
@@ -70,7 +69,7 @@ destroy:
 	npx cdk destroy --app="${PYTHON} ${PWD}/app.py" --force
 
 docs:
-	poetry run mkdocs serve
+	uv run mkdocs serve
 
 lint-docs:
 	docker run -v ${PWD}:/markdown 06kellyjac/markdownlint-cli --fix "docs"
@@ -79,10 +78,11 @@ watch:
 	npx cdk watch
 
 update-deps:
-	@echo "Updating Poetry dependencies..."
-	poetry update
+	@echo "Updating uv dependencies..."
+	uv lock --upgrade
+	uv sync --all-groups
 	@echo "Updating pre-commit hooks..."
-	pre-commit autoupdate
+	uv tool run pre-commit autoupdate
 	@echo "Fetching latest CDK version from npm..."
 	$(eval LATEST_CDK_VERSION := $(shell npm view aws-cdk version))
 	@echo "Found CDK version: $(LATEST_CDK_VERSION)"
