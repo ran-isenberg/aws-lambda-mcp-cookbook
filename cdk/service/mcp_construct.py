@@ -80,9 +80,9 @@ class MCPApiConstruct(Construct):
             self,
             f'{self.id_}{constants.LAMBDA_LAYER_NAME}',
             entry=constants.COMMON_LAYER_BUILD_FOLDER,
-            compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_14],
             removal_policy=RemovalPolicy.DESTROY,
-            compatible_architectures=[_lambda.Architecture.X86_64],
+            compatible_architectures=[_lambda.Architecture.ARM_64],
         )
 
     def _add_post_lambda_integration(
@@ -94,7 +94,7 @@ class MCPApiConstruct(Construct):
         lambda_function = _lambda.Function(
             self,
             'PureMcp',
-            runtime=_lambda.Runtime.PYTHON_3_13,
+            runtime=_lambda.Runtime.PYTHON_3_14,
             code=_lambda.Code.from_asset(constants.BUILD_FOLDER),
             handler='service.handlers.mcp.lambda_handler',
             environment={
@@ -111,7 +111,7 @@ class MCPApiConstruct(Construct):
             log_retention=RetentionDays.ONE_DAY,
             logging_format=_lambda.LoggingFormat.JSON,
             system_log_level_v2=_lambda.SystemLogLevel.WARN,
-            architecture=_lambda.Architecture.X86_64,
+            architecture=_lambda.Architecture.ARM_64,
         )
 
         api_resource.add_method(http_method='ANY', integration=aws_apigateway.LambdaIntegration(handler=lambda_function))

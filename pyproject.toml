@@ -1,69 +1,85 @@
 [build-system]
-requires = ["poetry>=2.0.1"]
-build-backend = "poetry.core.masonry.api"
-[tool.poetry]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
 name = "aws_mcp_cookbook"
 version = "3.0.0"
 description = "This repository provides a working, deployable, open source based, AWS Lambda MCP server and CDK Python code. This handler embodies Serverless best practices and has all the bells and whistles for a proper production ready handler"
-authors = ["Ran Isenberg"]
-classifiers=[
+authors = [{ name = "Ran Isenberg" }]
+readme = "README.md"
+license = "MIT-0"
+keywords = [
+    "aws lambda mcp cookbook",
+    "guide to aws mcp lambda",
+    "cdk blueprint",
+    "best practices",
+    "serverless mcp server blueprint",
+]
+classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
 ]
-repository="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook"
-readme = "README.md"
-keywords = ["aws lambda mcp cookbook", "guide to aws mcp lambda", "cdk blueprint", "best practices", "serverless mcp server blueprint"]
-license = "MIT-0"
+requires-python = ">=3.14,<4.0"
+dependencies = [
+    "pydantic>=2.0.3,<3.0.0",
+    "aws-lambda-powertools[tracer]>=3.7.0,<4.0.0",
+    "boto3>=1.26.125",
+    "aws-lambda-env-modeler",
+    "fastmcp",
+    "fastapi",
+]
 
+[project.urls]
+Repository = "https://github.com/ran-isenberg/aws-lambda-mcp-cookbook"
 
-[tool.poetry.dependencies]
-python = "^3.13.0"
-pydantic = {version = "^2.0.3"}
-aws-lambda-powertools =  {extras = ["tracer"],version = "^3.7.0"}
-boto3 = "^1.26.125"
-aws-lambda-env-modeler = "*"
-fastmcp = "*"
-fastapi = "*"
+[dependency-groups]
+dev = [
+    # CDK
+    "service-cdk",
+    "aws-cdk-lib>=2.180.0",
+    "constructs>=10.0.0",
+    "cdk-nag>2.0.0",
+    "aws-cdk.aws-lambda-python-alpha>=2.180.0a0",
+    "cdk-monitoring-constructs",
+    # DEV
+    "pytest",
+    "pytest-mock",
+    "pycodestyle",
+    "pytest-cov",
+    "pytest-html",
+    "pytest-asyncio",
+    "python-dateutil",
+    "python-dotenv",
+    "GitPython",
+    "ruff",
+    "radon",
+    "xenon",
+    "pre-commit",
+    "mkdocs-material",
+    "mkdocs-git-revision-date-plugin",
+    "mkdocs-glightbox",
+    "types-cachetools",
+    "mypy",
+    "types-requests",
+    "toml",
+    "mkdocs-render-swagger-plugin",
+    "mcp",
+    "tenacity",
+    "jsonschema",
+]
 
-[tool.poetry.group.dev.dependencies]
-# CDK
-service-cdk = {path = "cdk", develop = true}
-aws-cdk-lib = ">=2.180.0"
-constructs = ">=10.0.0"
-cdk-nag = ">2.0.0"
-"aws-cdk.aws-lambda-python-alpha" = "^2.180.0-alpha.0"
-cdk-monitoring-constructs = "*"
-# DEV
-pytest = "*"
-pytest-mock = "*"
-pycodestyle = "*"
-pytest-cov = "*"
-pytest-html = "*"
-pytest-asyncio = "*"
-python-dateutil = "*"
-python-dotenv = "*"
-GitPython = "*"
-ruff = "*"
-radon = "*"
-xenon = "*"
-pre-commit = "*"
-mkdocs-material = "*"
-mkdocs-git-revision-date-plugin = "*"
-mkdocs-glightbox = "*"
-types-cachetools = "*"
-mypy = "*"
-types-requests = "*"
-toml = "*"
-mkdocs-render-swagger-plugin = "*"
-mcp = "*"
-tenacity = "*"
-jsonschema = "*"
+[tool.uv.sources]
+service-cdk = { path = "cdk", editable = true }
 
-[tool.poetry.requires-plugins]
-poetry-plugin-export = ">=1.9"
+[tool.hatch.build.targets.wheel]
+packages = ["service"]
+
+[tool.hatch.build]
+skip-excluded-dirs = true
 
 [tool.pytest.ini_options]
 testpaths = "tests"
@@ -97,15 +113,15 @@ exclude = [
     ".pytest_cache",
     ".build",
     ".mypy_cache",
-    ".github"
+    ".github",
 ]
 
 # Same as Black.
 line-length = 150
 indent-width = 4
 
-# Assume Python 3.13
-target-version = "py313"
+# Assume Python 3.14
+target-version = "py314"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
@@ -117,7 +133,7 @@ select = [
     "C",  # flake8-comprehensions
     "B",  # flake8-bugbear
 ]
-ignore = [ "E203", "E266", "E501", "W191"]
+ignore = ["E203", "E266", "E501", "W191"]
 
 [tool.ruff.format]
 quote-style = "single"

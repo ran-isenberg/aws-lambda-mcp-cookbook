@@ -77,9 +77,9 @@ class FastMCPServerConstruct(Construct):
             self,
             f'{self.id_}{constants.LAMBDA_LAYER_NAME}',
             entry=constants.COMMON_LAYER_BUILD_FOLDER,
-            compatible_runtimes=[_lambda.Runtime.PYTHON_3_13],
+            compatible_runtimes=[_lambda.Runtime.PYTHON_3_14],
             removal_policy=RemovalPolicy.DESTROY,
-            compatible_architectures=[_lambda.Architecture.X86_64],
+            compatible_architectures=[_lambda.Architecture.ARM_64],
         )
 
     def _add_post_lambda_integration(
@@ -90,9 +90,9 @@ class FastMCPServerConstruct(Construct):
         lambda_function = _lambda.Function(
             self,
             constants.MCP_LAMBDA,
-            runtime=_lambda.Runtime.PYTHON_3_13,
+            runtime=_lambda.Runtime.PYTHON_3_14,
             code=_lambda.Code.from_asset(constants.BUILD_FOLDER),
-            architecture=_lambda.Architecture.X86_64,
+            architecture=_lambda.Architecture.ARM_64,
             handler='run.sh',
             environment={
                 constants.POWERTOOLS_SERVICE_NAME: constants.SERVICE_NAME,  # for logger, tracer and metrics
@@ -110,7 +110,7 @@ class FastMCPServerConstruct(Construct):
                 PythonLayerVersion.from_layer_version_arn(
                     self,
                     f'{self.id_}web_adapter_layer',
-                    f'arn:aws:lambda:{self.region}:{constants.WEB_ADAPTER_LAYER_ACCOUNT}:layer:{constants.WEB_ADAPTER_LAYER_NAME}:{constants.WEB_ADAPTER_LAYER_NAME_VERSION}',
+                    f'arn:aws:lambda:{self.region}:{constants.WEB_ADAPTER_LAYER_ACCOUNT}:layer:{constants.WEB_ADAPTER_LAYER_NAME_ARM64}:{constants.WEB_ADAPTER_LAYER_NAME_VERSION}',
                 ),
             ],
             role=role,
