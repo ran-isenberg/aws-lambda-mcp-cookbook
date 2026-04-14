@@ -37,8 +37,8 @@ mypy-lint:
 	uv run mypy --pretty service cdk tests docs/examples
 
 deps:
-	uv export --only-group dev --format requirements-txt --no-hashes > dev_requirements.txt
-	uv export --no-dev --format requirements-txt --no-hashes > lambda_requirements.txt
+	uv export --only-group dev --format requirements-txt --no-hashes --no-emit-project > dev_requirements.txt
+	uv export --no-dev --format requirements-txt --no-hashes --no-emit-project > lambda_requirements.txt
 
 unit:
 	uv run pytest tests/unit  --cov-config=.coveragerc --cov=service --cov-report xml
@@ -46,7 +46,7 @@ unit:
 build: deps
 	mkdir -p .build/lambdas ; cp -r service .build/lambdas
 	cp run.sh .build/lambdas/
-	mkdir -p .build/common_layer ; uv export --no-dev --format requirements-txt --no-hashes > .build/common_layer/requirements.txt
+	mkdir -p .build/common_layer ; uv export --no-dev --format requirements-txt --no-hashes --no-emit-project > .build/common_layer/requirements.txt
 
 infra-tests: build
 	uv run pytest tests/infrastructure
