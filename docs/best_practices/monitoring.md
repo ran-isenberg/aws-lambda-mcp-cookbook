@@ -51,7 +51,7 @@ The dashboard provides the Lambda function's metrics for latency, errors, thrott
 
 In addition, a CloudWatch logs widget shows only 'error' logs from the Lambda function.
 
-As for DynamoDB tables, we have the primary database and the idempotency table for usage, operation latency, errors, and throttles.
+The DynamoDB widget covers the service table: usage, operation latency, errors, and throttles.
 
 Personas that use this dashboard: developers, SREs.
 

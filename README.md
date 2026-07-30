@@ -186,7 +186,44 @@ The table's partition key is `session_id`, and the Lambda role already grants `G
 
 ### **Monitoring Design**
 
-![monitoring_design](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/docs/media/monitoring_design.png?raw=true)
+```mermaid
+flowchart LR
+    subgraph sources["Monitored resources"]
+        direction TB
+        gw["HTTP API Gateway"]
+        fn["Lambda function"]
+        logs["CloudWatch Logs<br/>ERROR pattern widget"]
+        ddb[("DynamoDB table")]
+        kpi["Custom metric<br/>ValidMcpEvents"]
+    end
+
+    subgraph high["High level dashboard"]
+        direction TB
+        h1["API Gateway health"]
+        h2["Daily MCP Requests"]
+    end
+
+    subgraph low["Low level dashboard"]
+        direction TB
+        l1["Lambda latency, errors,<br/>throttles, invocations"]
+        l2["Error log widget"]
+        l3["DynamoDB usage, latency,<br/>errors, throttles"]
+    end
+
+    alarms["CloudWatch alarms<br/>5xx error rate · p90 latency"]
+    sns["SNS topic<br/>KMS encrypted"]
+
+    gw --> h1
+    kpi --> h2
+    fn --> l1
+    logs --> l2
+    ddb --> l3
+
+    h1 --> alarms
+    l1 --> alarms
+    l2 --> alarms
+    alarms --> sns
+```
 <br></br>
 
 ### **Features**

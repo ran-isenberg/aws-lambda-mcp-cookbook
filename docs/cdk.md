@@ -35,13 +35,13 @@ All AWS Lambda function configurations are saved as constants at the `cdk.servic
 ### **Deployed Resources**
 
 - AWS Cloudformation stack: **cdk.service.service_stack.py** which is consisted of one construct
-- Construct: **cdk.service.api_construct.py** which includes:
+- Construct: **cdk.service.mcp_server_construct.py** which includes:
     - **Lambda Layer** - deployment optimization meant to be used with multiple handlers under the same API GW, sharing code logic and dependencies. You can read more about it [here.](https://www.ranthebuilder.cloud/post/aws-lambda-layers-best-practice){:target="_blank" rel="noopener"}
     - **Lambda Function** - The Lambda handler function itself. Handler code is taken from the service `folder`.
-    - **Lambda Role** - The role of the Lambda function.
+    - **Lambda Role** - The role of the Lambda function, with customer-managed permissions only.
+    - **CloudWatch Log Group** - the function's log group, with an explicit retention policy.
     - **API GW with Lambda Integration** - an HTTP API GW that proxies every path to the Lambda function, which serves MCP at /mcp.
-    - **AWS DynamoDB table** - stores request data. Created in the `api_db_construct.py` construct.
-    - **AWS DynamoDB table** - stores idempotency data. Created in the `api_db_construct.py` construct.
+    - **AWS DynamoDB table** - available for application state. Nothing reads it out of the box, see [Session data and DynamoDB](index.md#session-data-and-dynamodb).
 
 ### **Infrastructure CDK & Security Tests**
 
