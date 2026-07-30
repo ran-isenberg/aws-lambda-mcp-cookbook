@@ -1,0 +1,1631 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AWS Lambda MCP Cookbook - a Serverless MCP Server Blueprint">
+      
+      
+        <meta name="author" content="Ran Isenberg">
+      
+      
+      
+      
+        <link rel="next" href="./getting_started/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="./media/favicon.png">
+      <meta name="generator" content="zensical-0.0.52">
+    
+    
+      
+        <title>Homepage - AWS Lambda MCP Cookbook</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="./assets/stylesheets/modern/main.8b3b5a67.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="./assets/stylesheets/modern/palette.dfe2e883.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Ubuntu:300,300i,400,400i,500,500i,700,700i%7CJetBrains+Mono:400,400i,700,700i&amp;display=fallback">
+        <style>:root{--md-text-font:"Ubuntu";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="./stylesheets/extra.css">
+    
+    <script>__md_scope=new URL(".",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#aws-lambda-mcp-cookbook-a-serverless-mcp-server-blueprint" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="" title="AWS Lambda MCP Cookbook" class="md-header__button md-logo" aria-label="AWS Lambda MCP Cookbook" data-md-component="logo">
+      
+  <img src="./media/builder.png" alt="AWS Lambda MCP Cookbook">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AWS Lambda MCP Cookbook
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Homepage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6m0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4M7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="none" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="teal"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="" title="AWS Lambda MCP Cookbook" class="md-nav__button md-logo" aria-label="AWS Lambda MCP Cookbook" data-md-component="logo">
+      
+  <img src="./media/builder.png" alt="AWS Lambda MCP Cookbook">
+
+    </a>
+    AWS Lambda MCP Cookbook
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M216.5 362.5c-66-8-112.5-55.5-112.5-117 0-25 9-52 24-70-6.5-16.5-5.5-51.5 2-66 20-2.5 47 8 63 22.5 19-6 39-9 63.5-9s44.5 3 62.5 8.5c15.5-14 43-24.5 63-22 7 13.5 8 48.5 1.5 65.5 16 19 24.5 44.5 24.5 70.5 0 61.5-46.5 108-113.5 116.5 17 11 28.5 35 28.5 62.5v52c0 15 12.5 23.5 27.5 17.5C441 459.5 512 369 512 257 512 115.5 397 0 255.5 0S0 115.5 0 257c0 111 70.5 203 165.5 237.5 13.5 5 26.5-4 26.5-17.5v-40c-7 3-16 5-24 5-33 0-52.5-18-66.5-51.5-5.5-13.5-11.5-21.5-23-23-6-.5-8-3-8-6 0-6 10-10.5 20-10.5 14.5 0 27 9 40 27.5 10 14.5 20.5 21 33 21s20.5-4.5 32-16c8.5-8.5 15-16 21-21"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Homepage
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Homepage
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#aws-lambda-mcp-cookbook-a-serverless-mcp-server-blueprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>AWS Lambda MCP Cookbook - a Serverless MCP Server Blueprint</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>The Problem</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>The Solution</strong>
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Solution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#serverless-lambda-web-adapter-the-official-mcp-python-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Serverless Lambda Web Adapter &amp; the official MCP Python SDK
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protocol-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Protocol versions
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-data-and-dynamodb" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Session data and DynamoDB
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Session data and DynamoDB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#monitoring-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>Monitoring Design</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>Features</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serverless-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>Serverless Best Practices</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Security
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#known-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Known Issues
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handler-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Handler Example
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>License</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Getting Started
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./cdk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  CDK
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Pipeline
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Best Practices
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+  Best Practices
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./best_practices/logger/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Logger
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./best_practices/tracer/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Tracer
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./best_practices/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Metrics
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./best_practices/environment_variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Environment Variables
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://www.ranthebuilder.cloud/post/learn-how-to-write-aws-lambda-functions-with-architecture-layers" target="_blank"" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Architecture Layers
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./best_practices/input_validation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Input Validation
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./best_practices/monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Monitoring
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://www.ranthebuilder.cloud/post/aws-cdk-best-practices-from-the-trenches" target="_blank"" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  CDK Best practices
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://www.ranthebuilder.cloud/post/guide-to-serverless-lambda-testing-best-practices-part-1" target="_blank"" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Testing Best practices
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#aws-lambda-mcp-cookbook-a-serverless-mcp-server-blueprint" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>AWS Lambda MCP Cookbook - a Serverless MCP Server Blueprint</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>The Problem</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-solution" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>The Solution</strong>
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Solution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#serverless-lambda-web-adapter-the-official-mcp-python-sdk" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Serverless Lambda Web Adapter &amp; the official MCP Python SDK
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protocol-versions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Protocol versions
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#session-data-and-dynamodb" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Session data and DynamoDB
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Session data and DynamoDB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#monitoring-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>Monitoring Design</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#features" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>Features</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#serverless-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>Serverless Best Practices</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Security
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Security">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#known-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Known Issues
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handler-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Handler Example
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        <strong>License</strong>
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+  
+
+
+  <h1 id="__skip">Homepage</h1>
+
+<h2 id="aws-lambda-mcp-cookbook-a-serverless-mcp-server-blueprint"><strong>AWS Lambda MCP Cookbook - a Serverless MCP Server Blueprint</strong><a class="headerlink" href="#aws-lambda-mcp-cookbook-a-serverless-mcp-server-blueprint" title="Permanent link">&para;</a></h2>
+<p><a href="https://ranthebuilder.cloud/"><a class="glightbox" href="./media/banner.png" data-type="image" data-width="100%"><img alt="Ran The Builder - Master Serverless and Platform Engineering" src="./media/banner.png" width="800"></a></a></p>
+<h2 id="the-problem"><strong>The Problem</strong><a class="headerlink" href="#the-problem" title="Permanent link">&para;</a></h2>
+<p>Starting a Serverless MCP can be overwhelming. You need to figure out many questions and challenges that have nothing to do with your business domain:</p>
+<ul>
+<li>How to deploy to the cloud? What IAC framework do you choose?</li>
+<li>How to write a SaaS-oriented CI/CD pipeline? What does it need to contain?</li>
+<li>How do you handle observability, logging, tracing, metrics?</li>
+<li>How do you write a well-structured Lambda function?</li>
+<li>How do you handle testing?</li>
+<li>What makes an AWS Lambda handler resilient, traceable, and easy to maintain? How do you write such a code?</li>
+</ul>
+<h2 id="the-solution"><strong>The Solution</strong><a class="headerlink" href="#the-solution" title="Permanent link">&para;</a></h2>
+<p>This project aims to reduce cognitive load and answer these questions for you by providing an opinionated Python Serverless MCP server blueprint that implements best practices for AWS Lambda, MCP, Serverless CI/CD, and AWS CDK in one project.</p>
+<p>This project is a blueprint for new Serverless MCP servers.</p>
+<pre class="mermaid"><code>flowchart LR
+    agents["MCP clients&lt;br/&gt;agents, IDEs"]
+    waf["AWS WAF&lt;br/&gt;optional - see note"]
+    gw["Amazon API Gateway&lt;br/&gt;HTTP API v2 · ANY proxy route"]
+
+    subgraph fn["AWS Lambda · ARM64 · Python 3.14"]
+        direction TB
+        adapter["Lambda Web Adapter&lt;br/&gt;layer via AWS_LAMBDA_EXEC_WRAPPER"]
+        uvi["uvicorn on :8000"]
+        app["MCP server · mcp v2&lt;br/&gt;streamable_http_app at /mcp&lt;br/&gt;stateless_http · json_response"]
+        adapter --&gt; uvi --&gt; app
+    end
+
+    ddb[("Amazon DynamoDB&lt;br/&gt;provisioned for app state")]
+    cw["CloudWatch&lt;br/&gt;logs · metrics · dashboards · alarms"]
+    xray["AWS X-Ray"]
+
+    agents --&gt;|"MCP over Streamable HTTP"| gw
+    waf -.-&gt; gw
+    gw --&gt; adapter
+    app -.-&gt;|"unused by default"| ddb
+    app --&gt; cw
+    app --&gt; xray
+
+    classDef optional stroke-dasharray: 5 5
+    class waf,ddb optional</code></pre>
+<div class="admonition note">
+<p class="admonition-title">AWS WAF is not attached today</p>
+<p>WAF cannot front an API Gateway <strong>HTTP</strong> API (v2) - only a REST API.
+<code>WafToApiGatewayConstruct</code> in <code>cdk/service/waf_construct.py</code> is kept as a working reference:
+wire it up if you switch the edge to a REST API GW.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">DynamoDB is provisioned but unread</p>
+<p>The <code>2026-07-28</code> protocol is stateless, so nothing touches the table out of the box -
+see <a href="#session-data-and-dynamodb">Session data and DynamoDB</a>.</p>
+</div>
+<h3 id="serverless-lambda-web-adapter-the-official-mcp-python-sdk">Serverless Lambda Web Adapter &amp; the official MCP Python SDK<a class="headerlink" href="#serverless-lambda-web-adapter-the-official-mcp-python-sdk" title="Permanent link">&para;</a></h3>
+<p>Based on <a href="https://github.com/awslabs/aws-lambda-web-adapter">AWS Web Adapter</a> and the <a href="https://github.com/modelcontextprotocol/python-sdk">MCP Python SDK</a> (<code>mcp</code> v2).</p>
+<p>Use an HTTP API GW and Lambda function. Can be used with a REST API GW with a custom domain too.</p>
+<p>The server is an ordinary ASGI (Starlette) app served by uvicorn behind the Lambda Web Adapter, so it
+upholds the official MCP protocol and has a native auth mechanism (OAuth).</p>
+<h3 id="protocol-versions">Protocol versions<a class="headerlink" href="#protocol-versions" title="Permanent link">&para;</a></h3>
+<p>The SDK's <code>streamable_http_app()</code> serves <strong>both</strong> MCP protocol eras from the same endpoint, routed
+per request by the <code>MCP-Protocol-Version</code> header:</p>
+<ul>
+<li><code>2026-07-28</code> - the current stateless spec: no <code>initialize</code> handshake, no <code>Mcp-Session-Id</code>.</li>
+<li><code>2025-11-25</code> and earlier - the handshake era, for clients that have not migrated yet.</li>
+</ul>
+<p>There is nothing to configure; both are always on.</p>
+<h3 id="session-data-and-dynamodb">Session data and DynamoDB<a class="headerlink" href="#session-data-and-dynamodb" title="Permanent link">&para;</a></h3>
+<p>The <code>2026-07-28</code> protocol is stateless: there is no <code>initialize</code> handshake and no <code>Mcp-Session-Id</code>, and
+the server runs with <code>stateless_http=True</code>. Nothing is carried between requests for you.</p>
+<p>That is a protocol change, not a restriction on your application. <strong>The stack still provisions a
+DynamoDB table and passes its name to the Lambda as <code>TABLE_NAME</code>, so you can use it to store session
+or conversation state whenever you want it.</strong> Nothing reads it out of the box - it is there for you
+to build on.</p>
+<p>The <code>lifespan</code> yields a shared context object, and the table is resolved from <code>TABLE_NAME</code> on first
+use and reused thereafter - so the server still boots without any environment configured. A handler
+reaches it through the injected <code>Context</code>. The approach the spec recommends is a server-minted handle: your tool writes state
+to DynamoDB under a key it generates, returns that key to the client, and the client passes it back as
+an ordinary tool argument on the next call.</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">mcp.server.mcpserver</span><span class="w"> </span><span class="kn">import</span> <span class="n">Context</span>
+
+
+<span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">start_analysis</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Begin an analysis and return a handle to resume it.&quot;&quot;&quot;</span>
+    <span class="n">handle</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">request_context</span><span class="o">.</span><span class="n">lifespan_context</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">put_item</span><span class="p">(</span><span class="n">Item</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="n">handle</span><span class="p">,</span> <span class="s1">&#39;dataset&#39;</span><span class="p">:</span> <span class="n">dataset</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">handle</span>
+
+
+<span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">continue_analysis</span><span class="p">(</span><span class="n">handle</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">ctx</span><span class="p">:</span> <span class="n">Context</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Continue an analysis previously started with start_analysis.&quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">request_context</span><span class="o">.</span><span class="n">lifespan_context</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span><span class="n">Key</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;session_id&#39;</span><span class="p">:</span> <span class="n">handle</span><span class="p">})[</span><span class="s1">&#39;Item&#39;</span><span class="p">]</span>
+    <span class="o">...</span>
+</code></pre></div></td></tr></table></div>
+<p>The table's partition key is <code>session_id</code>, and the Lambda role already grants <code>GetItem</code>, <code>PutItem</code>,
+<code>UpdateItem</code> and <code>DeleteItem</code> on it.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>A handle is a bearer token: anyone who has it can read that state. Bind it to the caller's
+identity (validate it against the authenticated principal) rather than trusting the handle alone.</p>
+</div>
+<h4 id="monitoring-design"><strong>Monitoring Design</strong><a class="headerlink" href="#monitoring-design" title="Permanent link">&para;</a></h4>
+<pre class="mermaid"><code>flowchart LR
+    subgraph sources["Monitored resources"]
+        direction TB
+        gw["HTTP API Gateway"]
+        fn["Lambda function"]
+        logs["CloudWatch Logs&lt;br/&gt;ERROR pattern widget"]
+        ddb[("DynamoDB table")]
+        kpi["Custom metric&lt;br/&gt;ValidMcpEvents"]
+    end
+
+    subgraph high["High level dashboard"]
+        direction TB
+        h1["API Gateway health"]
+        h2["Daily MCP Requests"]
+    end
+
+    subgraph low["Low level dashboard"]
+        direction TB
+        l1["Lambda latency, errors,&lt;br/&gt;throttles, invocations"]
+        l2["Error log widget"]
+        l3["DynamoDB usage, latency,&lt;br/&gt;errors, throttles"]
+    end
+
+    alarms["CloudWatch alarms&lt;br/&gt;5xx error rate · p90 latency"]
+    sns["SNS topic&lt;br/&gt;KMS encrypted"]
+
+    gw --&gt; h1
+    kpi --&gt; h2
+    fn --&gt; l1
+    logs --&gt; l2
+    ddb --&gt; l3
+
+    h1 --&gt; alarms
+    l1 --&gt; alarms
+    l2 --&gt; alarms
+    alarms --&gt; sns</code></pre>
+<h3 id="features"><strong>Features</strong><a class="headerlink" href="#features" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Python Serverless MCP server with a recommended file structure.</li>
+<li>Official MCP Python SDK v2 - supports the current <code>2026-07-28</code> spec and older clients alike.</li>
+<li>MCP Tools input validation: check argument types and values</li>
+<li>Tests - unit, integration (in-process MCP client against the real server) and E2E with a real MCP client</li>
+<li>CDK infrastructure with infrastructure tests and security tests.</li>
+<li>CI/CD pipelines based on Github actions that deploys to AWS with python linters, complexity checks and style formatters.</li>
+<li>CI/CD pipeline deploys to dev/staging and production environments with different gates between each environment</li>
+<li>Makefile for simple developer experience.</li>
+<li>The AWS Lambda handler embodies Serverless best practices and has all the bells and whistles for a well-structured handler.</li>
+<li>AWS Lambda handler uses <a href="https://docs.powertools.aws.dev/lambda-python/">AWS Lambda Powertools</a>.</li>
+<li>AWS Lambda handler 3 layer architecture: handler layer, logic layer and data access layer</li>
+<li>CloudWatch dashboards - High level and low level including CloudWatch alarms</li>
+</ul>
+<p>The GitHub blueprint project can be found at <a href="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook" rel="noopener" target="_blank">https://github.com/ran-isenberg/aws-lambda-mcp-cookbook</a>.</p>
+<h2 id="serverless-best-practices"><strong>Serverless Best Practices</strong><a class="headerlink" href="#serverless-best-practices" title="Permanent link">&para;</a></h2>
+<p>The AWS Lambda handler will implement multiple best practice utilities.</p>
+<p>Each utility is implemented when a new blog post is published about that utility.</p>
+<p>The utilities cover multiple aspects of a well-structured service, including:</p>
+<ul>
+<li><a href="best_practices/logger/"><strong>Logging</strong></a></li>
+<li><a href="best_practices/tracer/"><strong>Observability: Monitoring and Tracing</strong></a></li>
+<li><a href="best_practices/metrics/"><strong>Observability: Business KPI Metrics</strong></a></li>
+<li><a href="best_practices/environment_variables/"><strong>Environment Variables</strong></a></li>
+<li><a href="https://www.ranthebuilder.cloud/post/learn-how-to-write-aws-lambda-functions-with-architecture-layers"><strong>Hexagonal Architecture</strong></a></li>
+<li><a href="best_practices/input_validation/"><strong>Input Validation</strong></a></li>
+<li><a href="https://www.ranthebuilder.cloud/post/how-to-effortlessly-monitor-serverless-applications-with-cloudwatch-part-one"><strong>Serverless Monitoring</strong></a></li>
+<li><a href="https://www.ranthebuilder.cloud/post/learn-how-to-write-aws-lambda-functions-with-architecture-layers" rel="noopener" target="_blank"><strong>Learn How to Write AWS Lambda Functions with Three Architecture Layers</strong></a></li>
+</ul>
+<p>While the code examples are written in Python, the principles are valid to any supported AWS Lambda handler programming language.</p>
+<h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Use the SDK's <code>auth</code> parameter on <code>MCPServer</code> for an OAuth implementation, or put an
+  IAM/Cognito/Lambda authorizer in front of the API Gateway.</li>
+<li>DNS rebinding protection is switched off in <code>service/app.py</code>. That check exists to protect a
+  server bound to a local port from browsers on the same machine; under the Lambda Web Adapter the
+  app only listens on loopback inside the execution environment and API Gateway forwards its own
+  Host header, so leaving it on would reject every request with <code>421 Misdirected Request</code>. API
+  Gateway is where authn/authz belongs here.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">WAF is not currently attached</p>
+<p>AWS WAF cannot be attached to an API Gateway <strong>HTTP</strong> API (v2), only to a REST API. The
+<code>WafToApiGatewayConstruct</code> in <code>cdk/service/waf_construct.py</code> is kept as a reference
+implementation - wire it up if you front the Lambda with a REST API GW instead.</p>
+</div>
+<h3 id="known-issues">Known Issues<a class="headerlink" href="#known-issues" title="Permanent link">&para;</a></h3>
+<ul>
+<li>There might be security issues with this implementation, MCP is very new and has many issues.</li>
+</ul>
+<h2 id="handler-example">Handler Example<a class="headerlink" href="#handler-example" title="Permanent link">&para;</a></h2>
+<p>The MCP surface is split by capability kind, mirroring the business logic layout so each protocol
+binding sits opposite the logic it exposes:</p>
+<div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code>service/
+  app.py                     the ASGI app uvicorn serves - assembles everything below
+  mcp_app/
+    mcp_server.py            the MCPServer instance, its identity and instructions
+    caching.py               cache hints advertised on catalog listings
+    context.py               AppContext + lifespan (shared, per-process state)
+    handlers/
+      __init__.py            imports the modules below - this is what registers them
+      tools.py               -&gt; service/logic/math.py
+      resources.py           -&gt; service/logic/profiles.py
+      prompts.py             -&gt; service/logic/hld.py
+</code></pre></div></td></tr></table></div>
+<p>A handler binds the protocol to a logic function and declares how clients may treat it:</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">service/mcp_app/handlers/tools.py</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="sd">&quot;&quot;&quot;MCP tools. Business logic lives in `service.logic.math`.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mcp.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToolAnnotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">service.handlers.utils.observability</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">service.logic.math</span><span class="w"> </span><span class="kn">import</span> <span class="n">add_two_numbers</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">service.mcp_app.mcp_server</span><span class="w"> </span><span class="kn">import</span> <span class="n">mcp</span>
+
+
+<span class="nd">@mcp</span><span class="o">.</span><span class="n">tool</span><span class="p">(</span>
+    <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Add two numbers&#39;</span><span class="p">,</span>
+    <span class="n">annotations</span><span class="o">=</span><span class="n">ToolAnnotations</span><span class="p">(</span>
+        <span class="n">read_only_hint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># touches no state, so clients may auto-approve it</span>
+        <span class="n">idempotent_hint</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># same arguments always produce the same answer</span>
+        <span class="n">open_world_hint</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># pure computation, no external systems</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">math</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add two numbers together&quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;using math tool&#39;</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="n">b</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">add_two_numbers</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p>The server object is built once, with its identity, lifespan and cache hints:</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">service/mcp_app/mcp_server.py</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="sd">&quot;&quot;&quot;The MCP server object and its identity.</span>
+
+<span class="sd">Importing this module gives you a server with **no capabilities registered**. The tools, resources</span>
+<span class="sd">and prompts live in `service.mcp_app.handlers` and register themselves on import - see that</span>
+<span class="sd">package&#39;s docstring. Import `service.app` if you want the fully assembled server.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mcp.server</span><span class="w"> </span><span class="kn">import</span> <span class="n">MCPServer</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">service.mcp_app.caching</span><span class="w"> </span><span class="kn">import</span> <span class="n">CACHE_HINTS</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">service.mcp_app.context</span><span class="w"> </span><span class="kn">import</span> <span class="n">lifespan</span>
+
+<span class="n">SERVER_INSTRUCTIONS</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span><span class="se">\</span>
+<span class="s2">A sample serverless MCP server. Use the &#39;math&#39; tool to add two integers. Read</span>
+<span class="s2">&#39;users://</span><span class="si">{user_id}</span><span class="s2">/profile&#39; to look up a user by numeric id. Use the</span>
+<span class="s2">&#39;generate_serverless_design_prompt&#39; prompt to turn a set of requirements into a serverless</span>
+<span class="s2">high level design brief.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DeterministicMCPServer</span><span class="p">(</span><span class="n">MCPServer</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Serves the catalog in a stable, name-sorted order.</span>
+
+<span class="sd">    The 2026-07-28 spec asks servers to list in a deterministic order so clients can cache the</span>
+<span class="sd">    result and LLM prompt caches keep hitting. Registration order is already stable per</span>
+<span class="sd">    deployment; sorting keeps it stable even as capabilities are added or moved between modules.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">list_tools</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">list_tools</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">tool</span><span class="p">:</span> <span class="n">tool</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">list_prompts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">list_prompts</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">prompt</span><span class="p">:</span> <span class="n">prompt</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">list_resource_templates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="k">await</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">list_resource_templates</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">template</span><span class="p">:</span> <span class="n">template</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+
+<span class="n">mcp</span><span class="p">:</span> <span class="n">MCPServer</span> <span class="o">=</span> <span class="n">DeterministicMCPServer</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;mcp-lambda-server&#39;</span><span class="p">,</span>
+    <span class="n">title</span><span class="o">=</span><span class="s1">&#39;AWS Lambda MCP Cookbook&#39;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s1">&#39;serverless MCP server blueprint.&#39;</span><span class="p">,</span>
+    <span class="n">instructions</span><span class="o">=</span><span class="n">SERVER_INSTRUCTIONS</span><span class="p">,</span>
+    <span class="n">website_url</span><span class="o">=</span><span class="s1">&#39;https://github.com/ran-isenberg/aws-lambda-mcp-cookbook&#39;</span><span class="p">,</span>
+    <span class="n">version</span><span class="o">=</span><span class="s1">&#39;4.0.0&#39;</span><span class="p">,</span>
+    <span class="n">lifespan</span><span class="o">=</span><span class="n">lifespan</span><span class="p">,</span>
+    <span class="n">cache_hints</span><span class="o">=</span><span class="n">CACHE_HINTS</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<p>And the entrypoint pulls in the handlers and exposes the ASGI app:</p>
+<div class="highlight"><table class="highlighttable"><tr><th colspan="2" class="filename"><span class="filename">service/app.py</span></th></tr><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="sd">&quot;&quot;&quot;The ASGI app. `run.sh` serves this module&#39;s `app` with uvicorn behind the Lambda Web Adapter.</span>
+
+<span class="sd">Importing this module assembles the whole server: `mcp` comes from `service.mcp_app.mcp_server`</span>
+<span class="sd">and importing `handlers` runs the decorators that register every capability on it. The dependency</span>
+<span class="sd">runs one way - app -&gt; handlers -&gt; mcp_server - so nothing here needs a deferred import.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mcp.server.transport_security</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransportSecuritySettings</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">service.mcp_app</span><span class="w"> </span><span class="kn">import</span> <span class="n">handlers</span>  <span class="c1"># noqa: F401  - imported for its registration side effect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">service.mcp_app.mcp_server</span><span class="w"> </span><span class="kn">import</span> <span class="n">mcp</span>
+
+<span class="c1"># DNS rebinding protection guards a server that binds a local port against browsers on the same</span>
+<span class="c1"># machine. Under the Lambda Web Adapter the app only ever listens on loopback inside the execution</span>
+<span class="c1"># environment, and the public edge is API Gateway - which forwards its own Host header. Leaving the</span>
+<span class="c1"># default on would reject every request with 421 Misdirected Request, so it is turned off here and</span>
+<span class="c1"># the edge is where authn/authz belongs.</span>
+<span class="n">app</span> <span class="o">=</span> <span class="n">mcp</span><span class="o">.</span><span class="n">streamable_http_app</span><span class="p">(</span>
+    <span class="n">stateless_http</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">json_response</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">transport_security</span><span class="o">=</span><span class="n">TransportSecuritySettings</span><span class="p">(</span><span class="n">enable_dns_rebinding_protection</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+<span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+<div class="admonition warning">
+<p class="admonition-title">Capabilities register on import</p>
+<p><code>@mcp.tool()</code>, <code>@mcp.resource()</code> and <code>@mcp.prompt()</code> register when their module is imported, so
+a new handler module must be imported in <code>service/mcp_app/handlers/__init__.py</code>. Forget it and
+the capability is silently missing from the catalog rather than raising - the listing tests in
+<code>tests/integration/test_mcp_server.py</code> are what catch that.</p>
+</div>
+<h2 id="license"><strong>License</strong><a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p>This library is licensed under the MIT License. See the <a href="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/LICENSE">LICENSE</a> file.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Ran Isenberg
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M202.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1M496 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2m-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3m-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://twitter.com/IsenbergRan" target="_blank" rel="noopener" title="twitter.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M459.4 151.7c.3 4.5.3 9.1.3 13.6 0 138.7-105.6 298.6-298.6 298.6-59.5 0-114.7-17.2-161.1-47.1 8.4 1 16.6 1.3 25.3 1.3 49.1 0 94.2-16.6 130.3-44.8-46.1-1-84.8-31.2-98.1-72.8 6.5 1 13 1.6 19.8 1.6 9.4 0 18.8-1.3 27.6-3.6-48.1-9.7-84.1-52-84.1-103v-1.3c14 7.8 30.2 12.7 47.4 13.3-28.3-18.8-46.8-51-46.8-87.4 0-19.5 5.2-37.4 14.3-53C87.4 130.8 165 172.4 252.1 176.9c-1.6-7.8-2.6-15.9-2.6-24C249.5 95.1 296.3 48 354.4 48c30.2 0 57.5 12.7 76.7 33.1 23.7-4.5 46.5-13.3 66.6-25.3-7.8 24.4-24.4 44.8-46.1 57.8 21.1-2.3 41.6-8.1 60.4-16.2-14.3 20.8-32.2 39.3-52.6 54.3"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.linkedin.com/in/ranisenberg/" target="_blank" rel="noopener" title="www.linkedin.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3M135.4 416H69V202.2h66.5V416zM102.2 96a38.5 38.5 0 1 1 0 77 38.5 38.5 0 1 1 0-77m282.1 320h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://medium.com/@isenberg-ran" target="_blank" rel="noopener" title="medium.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M369.4 32c43.4 0 78.6 35.2 78.6 78.6v83.8c-1.9-.1-3.8-.2-5.7-.2h-.4c-10 0-22.3 2.4-31.1 6.8-10 4.6-18.7 11.5-26 20.6-11.8 14.6-18.9 34.3-20.6 56.4-.1.7-.1 1.3-.2 2s-.1 1.2-.1 1.9c-.1 1.2-.1 2.4-.1 3.6 0 1.9-.1 3.8 0 5.8 1.2 50.1 28.2 90.2 76.3 90.2 2.7 0 5.3-.1 7.9-.4v20.4c0 43.4-35.2 78.6-78.6 78.6L78.6 480C35.2 480 0 444.8 0 401.4V110.6C0 67.2 35.2 32 78.6 32zM82.3 138.9l.3.1c13.2 3 19.8 7.4 19.8 23.4v187.2c0 16-6.7 20.4-19.9 23.4l-.3.1v2.8H135v-2.8l-.3-.1c-13.2-3-19.9-7.4-19.9-23.4V173.3l86.1 202.5h4.9l88.6-208.2v186.6c-1.1 12.6-7.8 16.5-19.7 19.2l-.3.1v2.7h91.9v-2.7l-.3-.1c-11.9-2.7-18.7-6.6-19.9-19.2l-.1-191.8h.1c0-16 6.7-20.4 19.9-23.4l.3-.1v-2.7h-72.2l-67 157.4-67-157.4H82.3zM448 340.3c-25.1-7.4-43-35.1-41.2-67.8h41.1v67.8zm-6.4-135.6c2.3 0 4.4.3 6.4.9V263h-40.2c1.5-33.6 13.6-57.9 33.8-58.3"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://www.ranthebuilder.cloud" target="_blank" rel="noopener" title="www.ranthebuilder.cloud" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M351.9 280H161c2.9 64.5 17.2 123.9 37.5 167.4 11.4 24.5 23.7 41.8 35.1 52.4 11.2 10.5 18.9 12.2 22.9 12.2s11.7-1.7 22.9-12.2c11.4-10.6 23.7-28 35.1-52.4 20.3-43.5 34.6-102.9 37.5-167.4zm-191-48h190.9c-2.8-64.5-17.1-123.9-37.4-167.4-11.4-24.4-23.7-41.8-35.1-52.4C268.1 1.7 260.4 0 256.4 0s-11.7 1.7-22.9 12.2c-11.4 10.6-23.7 28-35.1 52.4-20.3 43.5-34.6 102.9-37.5 167.4m-48 0c3.5-85.6 25.6-165.1 57.9-217.3C78.7 47.3 10.9 131.2 1.5 232zM1.5 280c9.4 100.8 77.2 184.7 169.3 217.3-32.3-52.2-54.4-131.7-57.9-217.3zm398.4 0c-3.5 85.6-25.6 165.1-57.9 217.3 92.1-32.7 159.9-116.5 169.3-217.3zm111.4-48C501.9 131.2 434.1 47.3 342 14.7c32.3 52.2 54.4 131.7 57.9 217.3z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate":null,"base":".","features":["navigation.sections","navigation.expand","navigation.top","navigation.instant","navigation.indexes","navigation.tracking","content.code.annotate"],"search":"./assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="./assets/javascripts/bundle.ed145cee.min.js"></script>
+      
+    
+  </body>
+</html>
