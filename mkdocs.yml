@@ -1,5 +1,5 @@
-site_name: AWS Lambda Handler CookBook
-site_description: AWS Lambda Handler CookBook
+site_name: AWS Lambda MCP Cookbook
+site_description: AWS Lambda MCP Cookbook - a Serverless MCP Server Blueprint
 site_author: Ran Isenberg
 repo_url: https://github.com/ran-isenberg/aws-lambda-mcp-cookbook
 edit_uri: edit/main/docs
@@ -66,24 +66,20 @@ markdown_extensions:
   - attr_list
   - pymdownx.emoji
   - pymdownx.inlinehilite
-  - pymdownx.snippets
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
 
-copyright: Copyright &copy; 2025 Ran Isenberg
+copyright: Copyright &copy; 2026 Ran Isenberg
 
 plugins:
-  - git-revision-date
   - search
-  - render_swagger
   - glightbox:
       touchNavigation: true
       loop: false
       effect: zoom
-      slide_effect: slide
       width: 100%
       height: auto
       zoomable: true

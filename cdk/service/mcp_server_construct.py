@@ -3,6 +3,7 @@ from aws_cdk import aws_apigatewayv2 as apigwv2
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_lambda as _lambda
+from aws_cdk import aws_logs as logs
 from aws_cdk.aws_apigatewayv2_integrations import HttpLambdaIntegration
 from aws_cdk.aws_lambda_python_alpha import PythonLayerVersion
 from aws_cdk.aws_logs import RetentionDays
@@ -13,16 +14,18 @@ import cdk.service.constants as constants
 from cdk.service.monitoring import Monitoring
 
 
-# this implements a server-based API construct for the MCP - use web-adapter extension to access the MCP and FastMCP
-class FastMCPServerConstruct(Construct):
+# This implements a server-based API construct for the MCP server: an HTTP API GW in front of a
+# Lambda running the ASGI app (MCP Python SDK) via the AWS Lambda Web Adapter extension.
+class MCPServerConstruct(Construct):
     def __init__(self, scope: Construct, id_: str) -> None:
         super().__init__(scope, id_)
         self.id_ = id_
         self.region = Session().region_name
         self.db = self._build_db(id_prefix=f'{id_}db')
-        self.lambda_role = self._build_lambda_role(self.db)
+        self.log_group = self._build_log_group()
+        self.lambda_role = self._build_lambda_role(self.db, self.log_group)
         self.common_layer = self._build_common_layer()
-        self.mcp_func = self._add_post_lambda_integration(self.lambda_role, self.db)
+        self.mcp_func = self._add_post_lambda_integration(self.lambda_role, self.db, self.log_group)
         self.http_api = self._build_api_gw()
         self._create_mcp_integration(self.mcp_func, self.http_api)
         self.monitoring = Monitoring(self, id_, self.http_api, self.db, [self.mcp_func])
@@ -38,7 +41,7 @@ class FastMCPServerConstruct(Construct):
             point_in_time_recovery_specification=dynamodb.PointInTimeRecoverySpecification(point_in_time_recovery_enabled=True),
             removal_policy=RemovalPolicy.DESTROY,
         )
-        CfnOutput(self, id=constants.FAST_MCP_TABLE_NAME_OUTPUT, value=table.table_name).override_logical_id(constants.FAST_MCP_TABLE_NAME_OUTPUT)
+        CfnOutput(self, id=constants.MCP_TABLE_NAME_OUTPUT, value=table.table_name).override_logical_id(constants.MCP_TABLE_NAME_OUTPUT)
         return table
 
     def _create_mcp_integration(self, mcp: _lambda.Function, http_api: apigwv2.HttpApi) -> None:
@@ -51,7 +54,26 @@ class FastMCPServerConstruct(Construct):
     def _build_api_gw(self) -> apigwv2.HttpApi:
         return apigwv2.HttpApi(self, 'McpHttpApi')
 
-    def _build_lambda_role(self, db: dynamodb.TableV2) -> iam.Role:
+    def _build_log_group(self) -> logs.LogGroup:
+        # An explicit log group replaces the Function's deprecated `log_retention` property. That
+        # property provisions a LogRetention custom resource whose role carries the AWS managed
+        # AWSLambdaBasicExecutionRole policy, which AwsSolutions-IAM4 flags.
+        # The name is explicit (and stack-unique via id_) so the log policy below can be written
+        # without CloudFormation tokens - see _build_lambda_role.
+        return logs.LogGroup(
+            self,
+            'McpServerLogGroup',
+            log_group_name=f'{constants.LAMBDA_LOG_GROUP_PREFIX}{self.id_}',
+            retention=RetentionDays.ONE_DAY,
+            removal_policy=RemovalPolicy.DESTROY,
+        )
+
+    def _build_lambda_role(self, db: dynamodb.TableV2, log_group: logs.LogGroup) -> iam.Role:
+        # No AWS managed policies: AwsSolutions-IAM4 wants customer-managed permissions, so the
+        # CloudWatch Logs grants that AWSLambdaBasicExecutionRole would provide are inlined here.
+        # The resource is a literal ARN pattern rather than log_group.log_group_arn on purpose:
+        # the latter renders as a CloudFormation token containing the generated logical id, which
+        # would make the AwsSolutions-IAM5 acknowledgment in service_stack.py stack-name specific.
         return iam.Role(
             self,
             'mcpRole',
@@ -66,10 +88,16 @@ class FastMCPServerConstruct(Construct):
                         )
                     ]
                 ),
+                'cloudwatch_logs': iam.PolicyDocument(
+                    statements=[
+                        iam.PolicyStatement(
+                            actions=['logs:CreateLogStream', 'logs:PutLogEvents'],
+                            resources=[constants.LAMBDA_LOG_GROUP_ARN_PATTERN],
+                            effect=iam.Effect.ALLOW,
+                        )
+                    ]
+                ),
             },
-            managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(managed_policy_name=(f'service-role/{constants.LAMBDA_BASIC_EXECUTION_ROLE}'))
-            ],
         )
 
     def _build_common_layer(self) -> PythonLayerVersion:
@@ -86,6 +114,7 @@ class FastMCPServerConstruct(Construct):
         self,
         role: iam.Role,
         db: dynamodb.TableV2,
+        log_group: logs.LogGroup,
     ) -> _lambda.Function:
         lambda_function = _lambda.Function(
             self,
@@ -97,7 +126,9 @@ class FastMCPServerConstruct(Construct):
             environment={
                 constants.POWERTOOLS_SERVICE_NAME: constants.SERVICE_NAME,  # for logger, tracer and metrics
                 constants.POWER_TOOLS_LOG_LEVEL: 'INFO',  # for logger
-                'TABLE_NAME': db.table_name,  # for mcp session store
+                # Available to the handler for application state. MCP itself no longer needs it:
+                # the 2026-07-28 protocol is stateless and the server runs with stateless_http=True.
+                'TABLE_NAME': db.table_name,
                 'AWS_LAMBDA_EXEC_WRAPPER': '/opt/bootstrap',
                 'PORT': '8000',
             },
@@ -114,7 +145,7 @@ class FastMCPServerConstruct(Construct):
                 ),
             ],
             role=role,
-            log_retention=RetentionDays.ONE_DAY,
+            log_group=log_group,
             logging_format=_lambda.LoggingFormat.JSON,
             system_log_level_v2=_lambda.SystemLogLevel.WARN,
         )

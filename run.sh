@@ -2,4 +2,4 @@
 
 PATH=$PATH:$LAMBDA_TASK_ROOT/bin \
     PYTHONPATH=$PYTHONPATH:/opt/python:$LAMBDA_RUNTIME_DIR:. \
-    exec python -m uvicorn --port=$PORT service.mcp_server:app
+    exec python -m uvicorn --port=$PORT service.app:app

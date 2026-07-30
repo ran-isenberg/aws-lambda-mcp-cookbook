@@ -1,4 +1,4 @@
-from service.logic.prompts.hld import hld_prompt
+from service.logic.hld import hld_prompt
 
 
 def test_hld_prompt():

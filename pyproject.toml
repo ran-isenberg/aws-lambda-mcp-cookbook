@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "aws_mcp_cookbook"
-version = "3.0.0"
-description = "This repository provides a working, deployable, open source based, AWS Lambda MCP server and CDK Python code. This handler embodies Serverless best practices and has all the bells and whistles for a proper production ready handler"
+version = "4.0.0"
+description = "This repository provides a working, deployable, open source based, AWS Lambda MCP server and CDK Python code. This handler embodies Serverless best practices and has all the bells and whistles for a well-structured handler"
 authors = [{ name = "Ran Isenberg" }]
 readme = "README.md"
 license = "MIT-0"
@@ -29,8 +29,7 @@ dependencies = [
     "aws-lambda-powertools[tracer]>=3.7.0,<4.0.0",
     "boto3>=1.26.125",
     "aws-lambda-env-modeler",
-    "fastmcp",
-    "fastapi",
+    "mcp>=2,<3",
 ]
 
 [project.urls]
@@ -42,7 +41,7 @@ dev = [
     "service-cdk",
     "aws-cdk-lib>=2.180.0",
     "constructs>=10.0.0",
-    "cdk-nag>2.0.0",
+    "cdk-nag>=3.0.0",
     "aws-cdk.aws-lambda-python-alpha>=2.180.0a0",
     "cdk-monitoring-constructs",
     # DEV
@@ -59,15 +58,15 @@ dev = [
     "radon",
     "xenon",
     "pre-commit",
-    "mkdocs-material",
-    "mkdocs-git-revision-date-plugin",
-    "mkdocs-glightbox",
+    # Docs are built by Zensical, which reads the existing mkdocs.yml and needs no
+    # mkdocs/mkdocs-material install of its own. ghp-import publishes to gh-pages,
+    # replacing the `mkdocs gh-deploy` command Zensical has no equivalent for.
+    "zensical",
+    "ghp-import",
     "types-cachetools",
     "mypy",
     "types-requests",
     "toml",
-    "mkdocs-render-swagger-plugin",
-    "mcp",
     "tenacity",
     "jsonschema",
 ]

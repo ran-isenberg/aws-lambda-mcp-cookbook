@@ -1,8 +1,7 @@
 import random
 
 import pytest
-from mcp.client.session import ClientSession
-from mcp.client.streamable_http import streamablehttp_client
+from mcp import Client
 
 
 @pytest.mark.asyncio
@@ -14,26 +13,17 @@ async def test_math_tool(web_adapter_mcp_url):
     expected_sum = a + b
 
     try:
-        async with streamablehttp_client(web_adapter_mcp_url) as (
-            read_stream,
-            write_stream,
-            _,
-        ):
-            # Create a session using the client streams
-            async with ClientSession(read_stream, write_stream) as session:
-                # Initialize the connection
-                await session.initialize()
+        # Client takes the server URL directly and negotiates the protocol version for us
+        async with Client(web_adapter_mcp_url) as client:
+            tools_response = await client.list_tools()
+            # Verify the math tool is available
+            assert 'math' == tools_response.tools[0].name, 'Math tool not found in available tools'
 
-                tools_response = await session.list_tools()
-                # Verify the math tool is available
-                assert 'math' == tools_response.tools[0].name, 'Math tool not found in available tools'
-
-                # Call a tool
-                tool_result = await session.call_tool('math', {'a': a, 'b': b})
-                # Verify the result
-                assert tool_result.content is not None
-                assert len(tool_result.content) == 1
-                assert tool_result.content[0].text == str(expected_sum), f'Expected {expected_sum}, got {tool_result.content[0].text}'
-                await session.send_ping()
+            # Call a tool
+            tool_result = await client.call_tool('math', {'a': a, 'b': b})
+            # Verify the result
+            assert tool_result.content is not None
+            assert len(tool_result.content) == 1
+            assert tool_result.content[0].text == str(expected_sum), f'Expected {expected_sum}, got {tool_result.content[0].text}'
     except Exception as e:
         pytest.fail(f'End-to-end test failed: {e}')

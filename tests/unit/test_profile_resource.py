@@ -1,4 +1,4 @@
-from service.logic.resources.profiles import get_profile_by_id
+from service.logic.profiles import get_profile_by_id
 
 
 def test_get_profile_by_id_returns_correct_format():
