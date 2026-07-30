@@ -153,4 +153,5 @@ jobs:
         run: make dev
       - name: Generate docs
         run: |
-          uv run mkdocs gh-deploy --force
+          uv run zensical build --strict
+          uv run ghp-import --no-jekyll --push --force --message "docs: deploy ${{ github.sha }}" site

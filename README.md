@@ -1,24 +1,22 @@
 # AWS Lambda MCP Cookbook (Python)
 
 [![license](https://img.shields.io/github/license/ran-isenberg/aws-lambda-mcp-cookbook)](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/master/LICENSE)
-![PythonSupport](https://img.shields.io/static/v1?label=python&message=3.13&color=blue?style=flat-square&logo=python)
+![PythonSupport](https://img.shields.io/static/v1?label=python&message=3.14&color=blue?style=flat-square&logo=python)
 [![codecov](https://codecov.io/github/ran-isenberg/aws-lambda-mcp-cookbook/graph/badge.svg?token=x9asxTtNQZ)](https://codecov.io/github/ran-isenberg/aws-lambda-mcp-cookbook)
 ![version](https://img.shields.io/github/v/release/ran-isenberg/aws-lambda-mcp-cookbook)
 ![github-star-badge](https://img.shields.io/github/stars/ran-isenberg/aws-lambda-mcp-cookbook.svg?style=social)
 ![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ran-isenberg/aws-lambda-mcp-cookbook/badge)
 ![issues](https://img.shields.io/github/issues/ran-isenberg/aws-lambda-mcp-cookbook)
 
-<img src="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/docs/media/banner.png?raw=true" width="400" alt="banner" />
+<a href="https://ranthebuilder.cloud/">
+  <img src="https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/docs/media/banner.png?raw=true" width="800" alt="Ran The Builder - Master Serverless and Platform Engineering" />
+</a>
 
 This project provides a working, open source based, AWS Lambda based Python MCP server implementation.
 
-It provides two options:
-1. Pure, native Lambda function with no FastMCP.
-2. Lambda with AWS web adapter and FastMCP
+It is built on the AWS Lambda Web Adapter and the official [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) (`mcp` v2), so it speaks the current `2026-07-28` MCP spec as well as older handshake-era clients.
 
-It contains a production grade implementation including DEPLOYMENT code with CDK and a CI/CD pipeline, testing, observability and more (see Features section).
-
-Choose the architecture that you see fit, each with its own pros and cons.
+It contains an opinionated implementation including DEPLOYMENT code with CDK and a CI/CD pipeline, testing, observability and more (see Features section).
 
 This project is a blueprint for new Serverless MCP servers.
 
@@ -37,157 +35,154 @@ You can start with a clean service out of this blueprint repository without usin
 
 ```bash
 cd {new repo folder}
-poetry env activate
-poetry install
+make dev
 make deploy
 ```
 
 Check out the official [Documentation](https://ran-isenberg.github.io/aws-lambda-mcp-cookbook/).
 
-Make sure you have poetry v2 and above.
-
 You can also run 'make pr' will run all checks, synth, file formatters , unit tests, deploy to AWS and run integration and E2E tests.
 
 ## **The Problem**
 
-Starting a production grade Serverless MCP can be overwhelming. You need to figure out many questions and challenges that have nothing to do with your business domain:
+Starting a Serverless MCP can be overwhelming. You need to figure out many questions and challenges that have nothing to do with your business domain:
 
 * How to deploy to the cloud? What IAC framework do you choose?
 * How to write a SaaS-oriented CI/CD pipeline? What does it need to contain?
 * How do you handle observability, logging, tracing, metrics?
-* How do you write a production grade Lambda function?
+* How do you write a well-structured Lambda function?
 * How do you handle testing?
 * What makes an AWS Lambda handler resilient, traceable, and easy to maintain? How do you write such a code?
 
 ## **The Solution**
 
-This project aims to reduce cognitive load and answer these questions for you by providing a production grade Python Serverless MCP server blueprint that implements best practices for AWS Lambda, MCP, Serverless CI/CD, and AWS CDK in one project.
-
-The MCP server uses JSON RPC over HTTP (non stream-able) via API Gateway's body payload parameter. See integration tests and see how the test event is generated.
-
-**BE AWARE** - The pure Lambda variation has limited MCP protocol support, it's based used for tools only simple MCP. For full blown services, use the FastMCP variation.
-
-This project aims to reduce cognitive load and answer these questions for you by providing a skeleton Python Serverless service blueprint that implements best practices for AWS Lambda, Serverless CI/CD, and AWS CDK in one blueprint project.
+This project aims to reduce cognitive load and answer these questions for you by providing an opinionated Python Serverless MCP server blueprint that implements best practices for AWS Lambda, MCP, Serverless CI/CD, and AWS CDK in one project.
 
 This project is a blueprint for new Serverless MCP servers.
 
-It provides two implementation options:
+```mermaid
+flowchart LR
+    agents["MCP clients<br/>agents, IDEs"]
+    waf["AWS WAF<br/>optional - see note"]
+    gw["Amazon API Gateway<br/>HTTP API v2 · ANY proxy route"]
 
-1. Pure, native Lambda function with no FastMCP.
-2. Lambda with AWS web adapter and FastMCP
+    subgraph fn["AWS Lambda · ARM64 · Python 3.14"]
+        direction TB
+        adapter["Lambda Web Adapter<br/>layer via AWS_LAMBDA_EXEC_WRAPPER"]
+        uvi["uvicorn on :8000"]
+        app["MCP server · mcp v2<br/>streamable_http_app at /mcp<br/>stateless_http · json_response"]
+        adapter --> uvi --> app
+    end
 
-Choose the architecture that you see fit, each with its own pros and cons.
+    ddb[("Amazon DynamoDB<br/>provisioned for app state")]
+    cw["CloudWatch<br/>logs · metrics · dashboards · alarms"]
+    xray["AWS X-Ray"]
 
-![design](https://github.com/ran-isenberg/aws-lambda-mcp-cookbook/blob/main/docs/media/design.png?raw=true)
+    agents -->|"MCP over Streamable HTTP"| gw
+    waf -.-> gw
+    gw --> adapter
+    app -.->|"unused by default"| ddb
+    app --> cw
+    app --> xray
 
-### Option 1: Serverless Native Lambda MCP Server
-
-This project provides a working, open source based, AWS Lambda based Python MCP server implementation.
-
-The MCP server uses JSON RPC over HTTP (non streamable) via API Gateway's body payload parameter. See integration tests and see how the test event is generated.
-
-It contains an advanced implementation including IaC CDK code and a CI/CD pipeline, testing, observability and more (see Features section).
-
-It's started based on [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler) - but had major refactors since, combined with the [AWS Lambda Handler cookbook](https://ran-isenberg.github.io/aws-lambda-handler-cookbook/) template.
-
-Better fitted for POCs or tool oriented MCPs. Can be secured with custom authentication code and WAF.
-
-Native/pure Lambda example:
-
-```python
-import os
-
-from aws_lambda_env_modeler import init_environment_variables
-from aws_lambda_powertools.logging import correlation_paths
-from aws_lambda_powertools.metrics import MetricUnit
-from aws_lambda_powertools.utilities.typing import LambdaContext
-
-from service.handlers.models.env_vars import McpHandlerEnvVars
-from service.handlers.utils.authentication import authenticate
-from service.handlers.utils.observability import logger, metrics, tracer
-from service.logic.math import add_two_numbers
-from service.mcp_parser.session_data import SessionData
-
-
-from service.handlers.models.env_vars import McpHandlerEnvVars
-from service.mcp_parser.parser import MCPLambdaHandler
-from service.mcp_parser.session import DynamoDBSessionStore
-
-session_store = DynamoDBSessionStore(table_name_getter=lambda: os.getenv('TABLE_NAME'))
-mcp = MCPLambdaHandler(name='mcp-lambda-server', version='1.0.0', session_store=session_store)
-
-@mcp.tool()
-def math(a: int, b: int) -> int:
-    """Add two numbers together"""
-
-    # Uncomment the following line if you want to use session data
-    # session_data: Optional[SessionData] = mcp.get_session()
-
-    # call logic layer
-    result = add_two_numbers(a, b)
-
-    # save session data
-    mcp.set_session(data={'result': result})
-
-    metrics.add_metric(name='ValidMcpEvents', unit=MetricUnit.Count, value=1)
-    return result
-
-
-@init_environment_variables(model=McpHandlerEnvVars)
-@logger.inject_lambda_context(correlation_id_path=correlation_paths.API_GATEWAY_REST)
-@metrics.log_metrics
-@tracer.capture_lambda_handler(capture_response=False)
-def lambda_handler(event: dict, context: LambdaContext) -> dict:
-    authenticate(event, context)
-    return mcp.handle_request(event, context)
+    classDef optional stroke-dasharray: 5 5
+    class waf,ddb optional
 ```
 
+> **AWS WAF is not attached today.** WAF cannot front an API Gateway **HTTP** API (v2) - only a REST API. `WafToApiGatewayConstruct` in `cdk/service/waf_construct.py` is kept as a working reference: wire it up if you switch the edge to a REST API GW.
+>
+> **DynamoDB is provisioned but unread.** The `2026-07-28` protocol is stateless, so nothing touches the table out of the box - see [Session data and DynamoDB](#session-data-and-dynamodb).
 
-### Option 2: Serverless Lambda Web Adapter & FastMCP
 
-Based on [AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter) and [FastMCP](https://github.com/jlowin/fastmcp).
+### Serverless Lambda Web Adapter & the official MCP Python SDK
+
+Based on [AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter) and the official [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) (`mcp` v2).
 
 Use an HTTP API GW and Lambda function. Can be used with a REST API GW with a custom domain too.
 
-Better fitted for production-grade MCP servers as it upholds to the official MCP protocol and has native auth mechanism (OAuth).
+The server is a plain ASGI (Starlette) app served by uvicorn behind the Lambda Web Adapter, so it upholds the official MCP protocol and has a native auth mechanism (OAuth).
 
-Example with FastMCP and AWS web adapter extension:
+The MCP surface is split by capability kind, mirroring the business logic layout so each protocol binding sits opposite the logic it exposes:
+
+```text
+service/
+  app.py                     the ASGI app uvicorn serves - assembles everything below
+  mcp_app/
+    mcp_server.py            the MCPServer instance, its identity and instructions
+    caching.py               cache hints advertised on catalog listings
+    context.py               AppContext + lifespan (shared, per-process state)
+    handlers/
+      __init__.py            imports the modules below - this is what registers them
+      tools.py               -> service/logic/math.py
+      resources.py           -> service/logic/profiles.py
+      prompts.py             -> service/logic/hld.py
+```
+
+A handler binds the protocol to a logic function and declares how clients may treat it - see [service/mcp_app/handlers/tools.py](service/mcp_app/handlers/tools.py):
 
 ```python
-from fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 
 from service.handlers.utils.observability import logger
-from service.logic.prompts.hld import hld_prompt
-from service.logic.resources.profiles import get_profile_by_id
-from service.logic.tools.math import add_two_numbers
-
-mcp: FastMCP = FastMCP(name='mcp-lambda-server')
+from service.logic.math import add_two_numbers
+from service.mcp_app.mcp_server import mcp
 
 
-@mcp.tool
+@mcp.tool(
+    title='Add two numbers',
+    annotations=ToolAnnotations(  # lets clients decide what may run without asking
+        read_only_hint=True,
+        idempotent_hint=True,
+        open_world_hint=False,
+    ),
+)
 def math(a: int, b: int) -> int:
     """Add two numbers together"""
     logger.info('using math tool', extra={'a': a, 'b': b})
     return add_two_numbers(a, b)
-
-
-# Dynamic resource template
-@mcp.resource('users://{user_id}/profile')
-def get_profile(user_id: int):
-    """Fetch user profile by user ID."""
-    logger.info('fetching user profile', extra={'user_id': user_id})
-    return get_profile_by_id(user_id)
-
-
-@mcp.prompt()
-def generate_serverless_design_prompt(design_requirements: str) -> str:
-    """Generate a serverless design prompt based on the provided design requirements."""
-    logger.info('generating serverless design prompt', extra={'design_requirements': design_requirements})
-    return hld_prompt(design_requirements)
-
-
-app = mcp.http_app(transport='http', stateless_http=True, json_response=True)
 ```
+
+> **Capabilities register on import.** `@mcp.tool()`, `@mcp.resource()` and `@mcp.prompt()` register when their module is imported, so a new handler module must be imported in [service/mcp_app/handlers/__init__.py](service/mcp_app/handlers/__init__.py). Forget it and the capability is silently missing from the catalog rather than raising - the listing tests in `tests/integration/test_mcp_server.py` are what catch that.
+
+### Protocol versions
+
+`streamable_http_app()` serves **both** MCP protocol eras from the same endpoint, routed per request by the `MCP-Protocol-Version` header:
+
+* `2026-07-28` - the current stateless spec: no `initialize` handshake, no `Mcp-Session-Id`.
+* `2025-11-25` and earlier - the handshake era, for clients that have not migrated yet.
+
+There is nothing to configure; both are always on.
+
+### Session data and DynamoDB
+
+The `2026-07-28` protocol is stateless: no `initialize` handshake, no `Mcp-Session-Id`, and the server runs with `stateless_http=True`. Nothing is carried between requests for you.
+
+That is a protocol change, not a restriction on your application. **The stack still provisions a DynamoDB table and passes its name to the Lambda as `TABLE_NAME`, so you can use it to store session or conversation state whenever you want it.** Nothing reads it out of the box - it is there for you to build on.
+
+The `lifespan` yields a shared context object, and the table is resolved from `TABLE_NAME` on first use and reused thereafter - so the server still boots without any environment configured. A handler reaches it through the injected `Context`. The approach the spec recommends is a server-minted handle: your tool writes state to DynamoDB under a key it generates, returns that key to the client, and the client passes it back as an ordinary tool argument on the next call.
+
+```python
+from mcp.server.mcpserver import Context
+
+
+@mcp.tool()
+def start_analysis(dataset: str, ctx: Context) -> str:
+    """Begin an analysis and return a handle to resume it."""
+    handle = str(uuid.uuid4())
+    ctx.request_context.lifespan_context.table.put_item(Item={'session_id': handle, 'dataset': dataset})
+    return handle
+
+
+@mcp.tool()
+def continue_analysis(handle: str, ctx: Context) -> str:
+    """Continue an analysis previously started with start_analysis."""
+    state = ctx.request_context.lifespan_context.table.get_item(Key={'session_id': handle})['Item']
+    ...
+```
+
+The table's partition key is `session_id`, and the Lambda role already grants `GetItem`, `PutItem`, `UpdateItem` and `DeleteItem` on it.
+
+> **Note:** a handle is a bearer token - anyone holding it can read that state. Bind it to the caller's identity rather than trusting the handle alone.
 
 ### **Monitoring Design**
 
@@ -196,28 +191,26 @@ app = mcp.http_app(transport='http', stateless_http=True, json_response=True)
 
 ### **Features**
 
-* PURE Lambda - not web adapter, no FastMCP required or Web adapter with FastMCP.
 * Python Serverless MCP server with a recommended file structure.
+* Official MCP Python SDK v2 - supports the current `2026-07-28` spec and older clients alike.
 * MCP Tools input validation: check argument types and values
-* Tests - unit, integration (tests for full MCP messages) and E2E with a real MCP client
+* Tests - unit, integration (in-process MCP client against the real server) and E2E with a real MCP client
 * CDK infrastructure with infrastructure tests and security tests.
 * CI/CD pipelines based on Github actions that deploys to AWS with python linters, complexity checks and style formatters.
 * CI/CD pipeline deploys to dev/staging and production environments with different gates between each environment
 * Makefile for simple developer experience.
-* The AWS Lambda handler embodies Serverless best practices and has all the bells and whistles for a proper production ready handler.
+* The AWS Lambda handler embodies Serverless best practices and has all the bells and whistles for a well-structured handler.
 * AWS Lambda handler uses [AWS Lambda Powertools](https://docs.powertools.aws.dev/lambda-python/).
 * AWS Lambda handler 3 layer architecture: handler layer, logic layer and data access layer
-* Session context storage in DynamoDB - global getter and setter (get_session, set_session) - be advised, has security issue - need to match session id to user
-* API protected by WAF with four AWS managed rules in production deployment
 * CloudWatch dashboards - High level and low level including CloudWatch alarms
 
 ## CDK Deployment
 
-The CDK code create an API GW with a path of /mcp which triggers the lambda on 'POST' requests.
+The CDK code creates an HTTP API GW that proxies every path to the Lambda, which serves MCP at /mcp.
 
-The AWS Lambda handler uses a Lambda layer optimization which takes all the packages under the [packages] section in the Pipfile and downloads them in via a Docker instance.
+The AWS Lambda handler uses a Lambda layer optimization: `make build` exports the runtime dependencies from `pyproject.toml` with `uv export`, and CDK bundles them into a layer via Docker.
 
-This allows you to package any custom dependencies you might have, just add them to the Pipfile under the [packages] section.
+To package extra dependencies, add them to the `dependencies` list in `pyproject.toml`.
 
 ## Serverless Best Practices
 
@@ -225,7 +218,7 @@ The AWS Lambda handler will implement multiple best practice utilities.
 
 Each utility is implemented when a new blog post is published about that utility.
 
-The utilities cover multiple aspect of a production-ready service, including:
+The utilities cover multiple aspects of a well-structured service, including:
 
 * [Logging](https://www.ranthebuilder.cloud/post/aws-lambda-cookbook-elevate-your-handler-s-code-part-1-logging)
 * [Observability: Monitoring and Tracing](https://www.ranthebuilder.cloud/post/aws-lambda-cookbook-elevate-your-handler-s-code-part-2-observability)
@@ -239,10 +232,13 @@ The utilities cover multiple aspect of a production-ready service, including:
 
 ## Security
 
-- Refer to the GitGub pages.
+* Use the SDK's `auth` parameter on `MCPServer` for an OAuth implementation, or put an IAM/Cognito/Lambda authorizer in front of the API Gateway.
+* DNS rebinding protection is switched off in [service/app.py](service/app.py). That check exists to protect a server bound to a local port from browsers on the same machine; under the Lambda Web Adapter the app only listens on loopback inside the execution environment and API Gateway forwards its own Host header, so leaving it on would reject every request with `421 Misdirected Request`. API Gateway is where authn/authz belongs here.
+* AWS WAF is **not** attached - see the note under the architecture diagram above.
 
-### Known Issues:
-- Refer to the GitGub pages.
+### Known Issues
+
+* There might be security issues with this implementation, MCP is very new and has many issues.
 
 ## Code Contributions
 
@@ -263,9 +259,8 @@ Read our code of conduct [here.](https://github.com/ran-isenberg/aws-lambda-mcp-
 ## Credits
 
 * [AWS Lambda Powertools (Python)](https://github.com/aws-powertools/powertools-lambda-python)
-* [AWS sample for MCP](https://github.com/awslabs/mcp/tree/main/src/mcp-lambda-handler)
 * [AWS Lambda Handler cookbook](https://ran-isenberg.github.io/aws-lambda-handler-cookbook/)
-* [FastMCP](https://github.com/jlowin/fastmcp)
+* [MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
 * [AWS Lambda Web adapter](https://github.com/awslabs/aws-lambda-web-adapter)
 
 ## License

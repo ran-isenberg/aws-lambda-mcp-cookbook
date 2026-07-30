@@ -13,7 +13,7 @@ By aggregating metrics, logs, and alarms, CloudWatch facilitates swift issue dia
 
 ## **Service Architecture**
 
-![hl](../media/design.png)
+See the [architecture diagram](../index.md) on the homepage for the service under monitoring.
 
 The goal is to monitor the service API gateway, Lambda function, and DynamoDB tables and ensure everything is in order.
 

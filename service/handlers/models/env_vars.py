@@ -9,4 +9,4 @@ class Observability(BaseModel):
 
 
 class McpHandlerEnvVars(Observability):
-    TABLE_NAME: Annotated[str, Field(min_length=1)]  # DynamoDB table name for session storage
+    TABLE_NAME: Annotated[str, Field(min_length=1)]  # DynamoDB table name for application state

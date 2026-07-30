@@ -6,8 +6,8 @@ description: AWS Lambda Cookbook Project Getting started
 
 * **Docker** - install [Docker](https://www.docker.com/){target="_blank"}. Required for the Lambda layer packaging process.
 * **[AWS CDK](cdk.md)** - Required for synth & deploying the AWS Cloudformation stack. Run CDK [Bootstrap](https://docs.aws.amazon.com/cdk/v2/guide/bootstrapping.html) on your AWS account and region.
-* Python 3.13
-* [poetry](https://pypi.org/project/poetry/){target="_blank"} - Make sure to have poetry v2 and above and to run ``poetry config --local virtualenvs.in-project true`` so all dependencies are installed in the project '.venv' folder.
+* Python 3.14
+* [uv](https://docs.astral.sh/uv/){target="_blank"} - the project uses uv for dependency management; ``make dev`` installs it for you if it is missing.
 * For Windows based machines, use the Makefile_windows version (rename to Makefile). Default Makefile is for Mac/Linux.
 
 ## Getting Started
@@ -18,16 +18,13 @@ You can start with a clean service out of this blueprint repository without usin
 
 ```bash
 cd {new repo folder}
-poetry env activate
-poetry install
+make dev
 make deploy
 ```
 
-Make sure you have poetry v2 and above.
+``make dev`` installs uv, syncs every dependency group into a local ``.venv``, installs the pre-commit hooks and runs ``npm ci`` for the pinned AWS CDK CLI.
 
 You can also run 'make pr' will run all checks, synth, file formatters , unit tests, deploy to AWS and run integration and E2E tests.
-
-1. Run ``make dev``
 
 ## **Deploy CDK**
 
@@ -41,9 +38,9 @@ You can run the tests by using the following command: ``make unit``.
 
 ## **Integration Tests**
 
-Make sure you deploy the stack first as these tests trigger your lambda handler LOCALLY but they can communicate with AWS services.
+These tests drive the real MCP server in-process with an in-memory client, so they need no deployed stack and no AWS credentials.
 
-These tests allow you to debug in your IDE your AWS Lambda function.
+They allow you to debug the MCP server in your IDE.
 
 Integration tests can be found under the ``tests/integration`` folder.
 
@@ -55,7 +52,7 @@ Make sure you deploy the stack first.
 
 E2E tests can be found under the ``tests/e2e`` folder.
 
-These tests send a 'POST' message to the deployed API GW and trigger the Lambda function on AWS.
+These tests connect a real MCP client to the deployed API GW endpoint and exercise the tool, resource and prompt over the wire.
 
 The tests are run automatically by: ``make e2e``.
 
@@ -65,7 +62,7 @@ CDK destroy can be run with ``make destroy``.
 
 ## **Preparing Code for PR**
 
-Run ``make pr``. This command will run all the required checks, pre commit hooks, linters, code formatters, import sorting and tests, so you can be sure GitHub's pipeline will pass. It will also generate an updated swagger OpenAPI JSON file and place it at docs/swagger/openapi.json location.
+Run ``make pr``. This command will run all the required checks, pre commit hooks, linters, code formatters, import sorting and tests, so you can be sure GitHub's pipeline will pass.
 
 The command auto fixes errors in the code for you.
 
@@ -81,14 +78,14 @@ Be sure to commit all the changes that ``make pr`` does for you.
 
 ### lambda_requirements.txt
 
-CDK requires a requirements.txt in order to create a zip file with the Lambda layer dependencies. It's based on the project's poetry.lock file.
+CDK requires a requirements.txt in order to create a zip file with the Lambda layer dependencies. It is exported from ``pyproject.toml`` and ``uv.lock``.
 
 ``make deploy`` command will generate it automatically for you.
 
 ### dev_requirements.txt
 
-This file is used during GitHub CI to install all the required Python libraries without using poetry.
+This file is used during GitHub CI to install all the required Python libraries.
 
-File contents are created out of the Pipfile.lock.
+File contents are exported from the ``dev`` dependency group in ``pyproject.toml``.
 
 ``make deploy`` and ``make deps`` are commands generate it automatically.

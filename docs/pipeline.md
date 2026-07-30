@@ -49,7 +49,7 @@ The two most important ones are `pr-serverless-service`  and `main-serverless-se
 
 ### **pr-serverless-service**
 
-<img alt="alt_text" src="../media/cicd_pr.png" />
+<img alt="Pull request CI/CD pipeline" src="../media/cicd_pr.png" />
 
 `pr-serverless-service` runs for every pull request you open. It expects you defined a GitHub environments by the name `dev`, `staging` and `production` and for each environments to have the following variables:  `CODECOV_TOKEN ` for CodeCov integration and `AWS_ROLE` that allows GitHub to deploy to that AWS account (one for dev, one for staging and one for production accounts).
 
@@ -65,7 +65,7 @@ Once merged, `main-serverless-service` will run.
 
 ### **main-serverless-service**
 
-<img alt="alt_text" src="../media/cicd_main.png" />
+<img alt="Main branch CI/CD pipeline" src="../media/cicd_main.png" />
 
 `main-serverless-service` runs for every MERGED pull request that runs on the main branch. It expects you defined a GitHub environments by the name `staging` and `production` and that both includes a secret by the name of `AWS_ROLE`.
 

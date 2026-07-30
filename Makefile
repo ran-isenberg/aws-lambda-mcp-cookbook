@@ -2,11 +2,6 @@
 PYTHON := ".venv/bin/python3"
 .ONESHELL:  # run all commands in a single shell, ensuring it runs within a local virtual env
 
-OPENAPI_DIR := ./docs/swagger
-CURRENT_OPENAPI := $(OPENAPI_DIR)/openapi.json
-LATEST_OPENAPI := openapi_latest.json
-
-
 dev:
 	@command -v uv >/dev/null 2>&1 || curl -LsSf https://astral.sh/uv/install.sh | sh
 	uv tool install --upgrade pre-commit
@@ -44,6 +39,9 @@ unit:
 	uv run pytest tests/unit  --cov-config=.coveragerc --cov=service --cov-report xml
 
 build: deps
+	# rm first: cp -r only ever adds, so without this the bundle keeps files that were
+	# deleted from service/ and ships them to Lambda forever
+	rm -rf .build/lambdas
 	mkdir -p .build/lambdas ; cp -r service .build/lambdas
 	cp run.sh .build/lambdas/
 	mkdir -p .build/common_layer ; uv export --no-dev --format requirements-txt --no-hashes --no-emit-project --output-file .build/common_layer/requirements.txt
@@ -69,7 +67,7 @@ destroy:
 	npx cdk destroy --app="${PYTHON} ${PWD}/app.py" --force
 
 docs:
-	uv run mkdocs serve
+	uv run zensical serve
 
 lint-docs:
 	docker run -v ${PWD}:/markdown 06kellyjac/markdownlint-cli --fix "docs"
